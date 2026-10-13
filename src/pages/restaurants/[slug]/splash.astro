@@ -1,0 +1,106 @@
+---
+import { allRestaurants } from '../../../data/segments/restaurants';
+
+export async function getStaticPaths() {
+  const validos = allRestaurants.filter(r => r && r.slug);
+  return validos.map((restaurant) => ({
+    params: { slug: restaurant.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const restaurant = allRestaurants.find(r => r && r.slug === slug);
+
+if (!restaurant) return Astro.redirect('/404');
+
+const { name, tagline, logo, splash } = restaurant;
+
+//  Ruta completa construida en el frontmatter
+const destino = `/restaurants/${slug}`;
+---
+
+<link rel="stylesheet" href={`/themes/${slug}.css`} />
+
+<style define:vars={{ splashUrl: `url('${splash}')` }}>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--navbar-primary, #ffd200);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: system-ui, sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  .bg {
+    position: absolute; inset: 0;
+    opacity: 0.12;
+    background-image: var(--splashUrl);
+    background-position: center;
+    background-size: cover;
+  }
+  .content {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 2rem;
+  }
+  .logo {
+    width: 180px; height: 180px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    animation: aparecer 0.8s ease-out forwards;
+    opacity: 0; transform: scale(0.8);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
+  h1 {
+    font-size: 2rem; font-weight: 900; color: #1a1a1a;
+    margin-bottom: 0.5rem; opacity: 0;
+    animation: aparecer 0.8s ease-out 0.2s forwards;
+  }
+  p {
+    color: var(--accent, #d62027); font-weight: 700;
+    opacity: 0;
+    animation: aparecer 0.8s ease-out 0.35s forwards;
+  }
+  .puntos {
+    margin-top: 2rem;
+    display: flex; gap: 0.4rem; justify-content: center;
+  }
+  .punto {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent, #d62027);
+    animation: latido 1.4s infinite ease-in-out;
+  }
+  .punto:nth-child(2) { animation-delay: 0.2s; }
+  .punto:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes aparecer { to { opacity: 1; transform: scale(1); } }
+  @keyframes latido {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+</style>
+
+<div class="bg"></div>
+<div class="content">
+  <div class="logo"><img src={logo} alt={name} loading="eager" /></div>
+  <h1>{name}</h1>
+  <p>{tagline}</p>
+  <div class="puntos">
+    <span class="punto"></span>
+    <span class="punto"></span>
+    <span class="punto"></span>
+  </div>
+</div>
+
+<!-- ✅ Usando define:vars para pasar la variable al script cliente de forma limpia -->
+<script define:vars={{ destino }}>
+  setTimeout(() => {
+    window.location.href = destino;
+  }, 2000);
+</script>

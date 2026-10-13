@@ -1,0 +1,61 @@
+---
+// Importamos el icono Utensils de Lucide
+import { Utensils } from 'lucide-astro';
+
+interface Props {
+  slug: string;
+  menuPath?: string;
+}
+
+const { slug, menuPath = '#cardapio' } = Astro.props;
+const fullLink = menuPath.startsWith('#') ? menuPath : `/restaurants/${slug}${menuPath}`;
+---
+
+<a href={fullLink} class="floating-menu-btn" aria-label="Ver Cardápio">
+  <!-- Renderizamos el icono de Utensilios (Tenedor y Cuchillo) -->
+  <Utensils size={20} strokeWidth={2.5} />
+  <span>Ver Cardápio</span>
+</a>
+
+<style>
+.floating-menu-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem; /* Anclado a la esquina inferior derecha */
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.6rem;
+  /* Gradiente rojo usando tus variables de marca */
+  background: linear-gradient(135deg, var(--color-red, #D62027) 0%, var(--color-red-dark, #B01A20) 100%);
+  color: white; /* Texto e icono blancos */
+  font-weight: 800;
+  font-size: 0.9rem;
+  border-radius: 3rem;
+  box-shadow: 0 6px 20px rgba(214, 32, 39, 0.4); /* Sombra roja sutil */
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.floating-menu-btn:hover {
+  transform: translateY(-4px); /* Animación al pasar el mouse */
+  box-shadow: 0 8px 24px rgba(214, 32, 39, 0.5);
+  color: white;
+}
+
+.floating-menu-btn:active {
+  transform: scale(0.96); /* Efecto de clic */
+}
+
+@media (min-width: 768px) {
+  .floating-menu-btn {
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.8rem;
+    font-size: 1rem;
+  }
+}
+</style>

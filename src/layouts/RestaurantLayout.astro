@@ -1,0 +1,50 @@
+---
+import type { Restaurant } from '../data/segments/restaurants/types';
+import Navbar from '../components/shared/Navbar.astro';
+import FloatingMenuBtn from '../components/restaurants/FloatingMenuBtn.astro';
+import { getThemePath } from '../assets/styles/index';
+
+interface Props {
+  restaurant: Restaurant;
+}
+
+const { restaurant } = Astro.props;
+
+//  Elegimos el tema automáticamente
+const themePath = getThemePath(restaurant.slug);
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{restaurant.name} — {restaurant.tagline}</title>
+    <meta name="description" content={`${restaurant.name} — ${restaurant.tagline}`} />
+    <link rel="icon" href={restaurant.logo} />
+    
+    <!--  Estilos: Global + Tema del restaurante -->
+    <link rel="stylesheet" href="/src/assets/styles/global.css" />
+    <link rel="stylesheet" href={themePath} />
+  </head>
+  <body>
+    <!-- Pasamos datos al Navbar -->
+    <Navbar
+      name={restaurant.name}
+      tagline={restaurant.tagline}
+      logo={restaurant.logo}
+      isOpen={restaurant.isOpen}
+      todayHours={restaurant.todayHours}
+      schedule={restaurant.schedule}
+      homeUrl={`/restaurants/${restaurant.slug}`}
+    />
+    
+    <main>
+      <slot />
+    </main>
+
+    {Astro.props.showFloatingBtn !== false && (
+      <FloatingMenuBtn slug={restaurant.slug} menuPath={restaurant.menuPath} />
+    )}
+  </body>
+</html>

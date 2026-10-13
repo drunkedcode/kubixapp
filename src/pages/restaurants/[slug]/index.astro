@@ -1,0 +1,31 @@
+---
+import { allRestaurants } from '@/data/segments/restaurants';
+import RestaurantLayout from '@/layouts/RestaurantLayout.astro';
+import HeroSlider from '@/components/restaurants/HeroSlider.astro';
+import GalleryGrid from '@/components/restaurants/GalleryGrid.astro';
+import SocialLinks from '@/components/restaurants/SocialLinks.astro';
+
+export async function getStaticPaths() {
+  // Filtramos solo los que existen y tienen slug — NUNCA falla
+  const validos = allRestaurants.filter(r => r && r.slug);
+  return validos.map((restaurant) => ({
+    params: { slug: restaurant.slug }
+  }));
+}
+
+const { slug } = Astro.params;
+const restaurant = allRestaurants.find((r) => r && r.slug === slug);
+
+if (!restaurant) return Astro.redirect('/restaurants');
+---
+
+<RestaurantLayout restaurant={restaurant}>
+  <main>
+    <!-- Slider con promociones -->
+    <HeroSlider slides={restaurant.heroSlider} />
+    <!-- Galería de fotos -->
+    <GalleryGrid items={restaurant.gallery} />
+    <!-- Redes sociales -->
+    <SocialLinks links={restaurant.social} name={restaurant.name} />
+  </main>
+</RestaurantLayout>

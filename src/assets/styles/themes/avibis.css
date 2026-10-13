@@ -1,0 +1,208 @@
+/* =============================================
+   AVIBI'S — Estilos Base | Paleta & Layout Centrado
+   ============================================= */
+
+/* ── 1. Variables de Color (Basadas en el Logo) ── */
+:root {
+  /* === TUS COLORES EXISTENTES — INTACTO === */
+  --color-yellow: #FFD200;
+  --color-yellow-dark: #E6BC00;
+  --color-red: #D62027;
+  --color-red-dark: #A31218;
+  --color-black: #1A1A1A;
+  --color-navy: #0F1F38;
+  --color-gold: #D4AF37;
+  --color-white: #FFFFFF;
+  --bg-page: #F8F9FA;
+  --bg-card: #FFFFFF;
+  --border-light: #E5EAF0;
+  --text-dark: #2D3748;
+  --text-muted: #718096;
+  --text-light: #A0AEC0;
+  --app-max-width: 480px;
+
+  /* === NOMBRES DINÁMICOS — SIN REFERENCIA A COLOR === */
+  --navbar-primary: var(--color-yellow);
+  --navbar-secondary: var(--color-yellow-dark);
+  --accent: var(--color-red);
+}
+
+/* ── 2. Reseteo ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  background-color: #121824;     /* Fondo oscuro para los costados fuera del marco PWA en Web */
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--text-dark);
+  background-color: var(--bg-page);
+  min-height: 100vh;
+  
+  /* LAYOUT MÓVIL CENTRADO EN DESKTOP */
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+/* ── 3. Contenedor Interrogado ── */
+.container {
+  width: 92%;
+  max-width: 100%; /* No se estira más allá de las paredes de la App PWA */
+  margin: 0 auto;
+}
+
+/* ── 4. Tipografía ── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+h2 {
+  font-size: 1.35rem;
+}
+h3 {
+  font-size: 1.05rem;
+}
+
+/* ── 5. Botones ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--color-red) 0%, var(--color-red-dark) 100%);
+  color: var(--color-white);
+  box-shadow: 0 4px 12px rgba(214, 32, 39, 0.25);
+}
+
+.btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(214, 32, 39, 0.35);
+}
+
+.btn--yellow {
+  background: linear-gradient(135deg, var(--color-yellow) 0%, var(--color-yellow-dark) 100%);
+  color: var(--color-black);
+  box-shadow: 0 4px 12px rgba(255, 210, 0, 0.3);
+}
+
+.btn--yellow:hover {
+  transform: translateY(-2px);
+}
+
+/* ── 6. Tarjetas ── */
+.card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
+  transition: all 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-yellow-dark);
+}
+
+/* ── 7. Secciones ── */
+.section {
+  padding: 1.75rem 0;
+}
+
+.section__header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.section__title {
+  color: var(--color-black);
+  position: relative;
+  display: inline-block;
+}
+
+.section__title::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: var(--color-red);
+  border-radius: 2px;
+}
+
+/* ── 8. Navegación / Carrusel Horizontal (Reels y Categorías) ── */
+.categories-nav {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.6rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Oculta scrollbar en Firefox */
+}
+
+.categories-nav::-webkit-scrollbar {
+  display: none; /* Oculta scrollbar en Chrome/Safari */
+}
+
+.category-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-yellow);
+  color: var(--text-dark);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-btn.active,
+.category-btn:hover {
+  background: var(--color-yellow);
+  border-color: var(--color-yellow-dark);
+}

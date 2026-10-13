@@ -1,0 +1,237 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import { allRestaurants } from '../data/segments/restaurants';
+import { UtensilsCrossed, MapPin, ChevronRight } from 'lucide-astro';
+
+// Filtramos SOLO los que existen y tienen slug
+const restaurantesValidos = allRestaurants.filter(r => r && r.slug);
+---
+
+<MainLayout>
+  <section class="home-page">
+    <div class="container">
+      <!-- Hero / Presentación -->
+      <div class="home-hero" data-aos="fade-down">
+        <h1 class="home-hero__title">
+          Bienvenido a <span>KubixApp</span>
+        </h1>
+        <p class="home-hero__subtitle">
+          Descubre los mejores sabores de nuestra región. Tu menú digital, siempre contigo.
+        </p>
+        <a href="/restaurants" class="home-hero__btn">
+          <UtensilsCrossed size={18} />
+          Ver Restaurantes
+          <ChevronRight size={16} />
+        </a>
+      </div>
+
+      <!-- Tarjetas de restaurantes destacados -->
+      <div class="home-section" data-aos="fade-up">
+        <h2 class="home-section__title">Nuestros Socios</h2>
+        <p class="home-section__desc">Elige y conoce cada uno de ellos</p>
+
+        <!-- ⚠️ Mensaje si no aparecen -->
+        {restaurantesValidos.length === 0 && (
+          <p style="text-align:center; color:red; padding:2rem;">
+            ⚠️ No se cargaron los restaurantes — revisa el archivo de importación
+          </p>
+        )}
+
+        <div class="home-cards">
+          {restaurantesValidos.map((restaurant, index) => (
+            <a
+              href={`/restaurants/${restaurant.slug}/splash`}
+              class="home-card"
+              key={restaurant.slug}
+              data-aos="fade-up"
+              data-aos-delay={100 + index * 100}
+            >
+              <div class="home-card__top">
+                <img
+                  src={restaurant.logo}
+                  alt={restaurant.name}
+                  class="home-card__logo"
+                  loading="lazy"
+                />
+                <span class="home-card__status">
+                  {restaurant.isOpen ? '🟢 Aberto' : '🔴 Fechado'}
+                </span>
+              </div>
+              <h3 class="home-card__name">{restaurant.name}</h3>
+              <p class="home-card__tag">{restaurant.tagline}</p>
+              <div class="home-card__info">
+                <MapPin size={14} />
+                <span>{restaurant.phone}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div class="home-all-link">
+          <a href="/restaurants" class="btn-all">
+            Ver todos <ChevronRight size={16} />
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+/* =============================================
+   PÁGINA PRINCIPAL — KubixApp
+   ============================================= */
+.home-page {
+  padding: 4rem 0 6rem;
+  min-height: 90vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+/* Hero */
+.home-hero {
+  text-align: center;
+  padding: 3rem 0 4rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.home-hero__title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 1rem;
+  line-height: 1.2;
+}
+.home-hero__title span {
+  background: linear-gradient(90deg, #D62027, #FFE100);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.home-hero__subtitle {
+  font-size: 1.05rem;
+  color: #64748b;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+.home-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(90deg, #D62027, #E8C85F);
+  color: white;
+  font-weight: 800;
+  font-size: 1rem;
+  border-radius: 3rem;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(214, 32, 39, 0.25);
+  transition: all 0.3s ease;
+}
+.home-hero__btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(214, 32, 39, 0.35);
+  color: white;
+}
+/* Sección de tarjetas */
+.home-section {
+  padding-top: 2rem;
+}
+.home-section__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+  margin: 0 0 0.3rem;
+}
+.home-section__desc {
+  text-align: center;
+  color: #64748b;
+  margin: 0 0 2.5rem;
+}
+/* Grilla de tarjetas */
+.home-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .home-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .home-cards {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+/* Tarjeta */
+.home-card {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  text-decoration: none;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+.home-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
+  border-color: #D62027;
+}
+.home-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.home-card__logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f1f5f9;
+}
+.home-card__status {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.home-card__name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.3rem;
+}
+.home-card__tag {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0 0 1rem;
+}
+.home-card__info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.home-all-link {
+  text-align: center;
+  margin-top: 2.5rem;
+}
+.btn-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 2rem;
+  border: 2px solid #D62027;
+  color: #D62027;
+  font-weight: 700;
+  border-radius: 3rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.btn-all:hover {
+  background: #D62027;
+  color: white;
+}
+</style>

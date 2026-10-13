@@ -1,0 +1,106 @@
+---
+// Componente de Escáner QR optimizado para PWA
+---
+
+<div class="qr-scanner-wrapper">
+  <div id="reader"></div>
+  <div id="scanner-result" class="scanner-result hidden"></div>
+  <button id="start-camera-btn" class="scanner-btn">
+    Escanear QR de la Mesa
+  </button>
+</div>
+
+<script>
+  import { Html5Qrcode } from "html5-qrcode";
+
+  const startBtn = document.getElementById("start-camera-btn");
+  const resultDiv = document.getElementById("scanner-result");
+  let html5QrCode: Html5Qrcode | null = null;
+
+  startBtn?.addEventListener("click", async () => {
+    startBtn.style.display = "none";
+    
+    try {
+      html5QrCode = new Html5Qrcode("reader");
+      
+      const qrCodeSuccessCallback = (decodedText: string, decodedResult: any) => {
+        // Pausar o detener el escáner al detectar con éxito
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => {
+            if (resultDiv) {
+              resultDiv.textContent = `¡Código detectado: ${decodedText}!`;
+              resultDiv.classList.remove("hidden");
+            }
+            // Aquí puedes redirigir o procesar la URL escaneada
+            // window.location.href = decodedText;
+          }).catch(err => console.error("Error al detener la cámara", err));
+        }
+      };
+
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+      // Iniciar con la cámara trasera por defecto en móviles
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeSuccessCallback,
+        (errorMessage) => {
+          // Errores de escaneo continuo (se pueden ignorar ya que busca constantemente)
+        }
+      );
+    } catch (err) {
+      console.error("No se pudo iniciar la cámara:", err);
+      alert("No se pudo acceder a la cámara. Verifica los permisos del navegador.");
+      if (startBtn) startBtn.style.display = "block";
+    }
+  });
+</script>
+
+<style>
+  .qr-scanner-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  #reader {
+    width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: #0f172a;
+  }
+
+  .scanner-btn {
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(90deg, #D62027, #E8C85F);
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(214, 32, 39, 0.3);
+    transition: transform 0.2s ease;
+  }
+
+  .scanner-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .scanner-result {
+    padding: 1rem;
+    background: #16a34a;
+    color: white;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+import RestaurantLayout from '../../../layouts/RestaurantLayout.astro';
+import { allRestaurants } from '../../../data/segments/restaurants';
+
+// ✅ Requerido: le dice a Astro qué slugs existen
+export async function getStaticPaths() {
+  return allRestaurants.map((restaurant) => ({
+    params: { slug: restaurant.slug }
+  }));
+}
+
+const { slug } = Astro.params;
+const restaurant = allRestaurants.find(r => r.slug === slug);
+
+if (!restaurant) return Astro.redirect('/restaurants');
+---
+
+<RestaurantLayout restaurant={restaurant} showFloatingBtn={false}>
+  <main class="menu-page">
+    <div class="container">
+      <header class="menu-header" data-aos="fade-up">
+        <h1>Cardápio</h1>
+        <p>{restaurant.name}</p>
+      </header>
+
+      <section class="menu-content" data-aos="fade-up" data-aos-delay="100">
+        <div class="empty-state">
+          <h2>🚧 Em construção</h2>
+          <p>Os pratos e categorias serão adicionados em breve.</p>
+          <a href={`/restaurants/${slug}`} class="back-link">← Voltar para página inicial</a>
+        </div>
+      </section>
+    </div>
+  </main>
+</RestaurantLayout>
+
+<style>
+.menu-page {
+  padding: 2rem 1rem 6rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.menu-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.menu-header h1 {
+  font-size: 1.8rem;
+  color: var(--color-red, #D62027);
+  margin-bottom: 0.5rem;
+}
+.menu-header p {
+  font-weight: 600;
+  color: var(--text-main, #333);
+  margin: 0;
+}
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 1rem;
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+}
+.empty-state h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+.empty-state p {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+.back-link {
+  display: inline-block;
+  color: var(--color-red, #D62027);
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
+</style>

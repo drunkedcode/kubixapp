@@ -1,0 +1,216 @@
+---
+interface GalleryItem {
+  id: number | string;
+  image?: string; // Para compatibilidad con la estructura actual
+  url?: string;   // O si viene como url
+  video?: string; // O si viene directo como video
+  alt: string;
+}
+
+interface Props {
+  items: GalleryItem[];
+}
+
+const { items = [] } = Astro.props;
+
+// Función auxiliar para determinar si el elemento es un video o imagen basándonos en los datos reales
+const getMediaInfo = (item: GalleryItem) => {
+  const mediaUrl = item.video || item.url || item.image || '';
+  const isVideo = Boolean(item.video || mediaUrl.match(/\.(mp4|webm|mov)$/i));
+  return { mediaUrl, isVideo };
+};
+---
+
+<div class="gallery-grid">
+  {items.map((item, index) => {
+    const { mediaUrl, isVideo } = getMediaInfo(item);
+    return (
+      <div 
+        class="gallery-item" 
+        data-full={mediaUrl} 
+        data-type={isVideo ? 'video' : 'image'}
+      >
+        {isVideo ? (
+          <div class="video-wrapper">
+            <video src={mediaUrl} muted playsinline></video>
+            <div class="play-badge">▶</div>
+          </div>
+        ) : (
+          <img 
+            src={mediaUrl} 
+            alt={item.alt} 
+            loading={index < 4 ? 'eager' : 'lazy'} 
+          />
+        )}
+        {item.alt && <span class="gallery-title">{item.alt}</span>}
+      </div>
+    );
+  })}
+</div>
+
+<!-- Lightbox Modal Dinámico -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" aria-label="Cerrar">&times;</button>
+  <div class="lightbox-content" id="lightboxContent"></div>
+</div>
+
+<script>
+  const galleryItems = document.querySelectorAll('.gallery-item');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxContent = document.getElementById('lightboxContent');
+  const closeBtn = document.querySelector('.lightbox-close');
+
+  galleryItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const fullSrc = item.getAttribute('data-full');
+      const type = item.getAttribute('data-type');
+
+      if (!lightbox || !lightboxContent || !fullSrc) return;
+
+      lightboxContent.innerHTML = '';
+
+      if (type === 'video') {
+        const video = document.createElement('video');
+        video.src = fullSrc;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        lightboxContent.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = fullSrc;
+        img.alt = 'Media ampliada';
+        lightboxContent.appendChild(img);
+      }
+
+      lightbox.classList.add('open');
+    });
+  });
+
+  const closeLightbox = () => {
+    lightbox?.classList.remove('open');
+    if (lightboxContent) lightboxContent.innerHTML = ''; // Detiene el video al cerrar
+  };
+
+  closeBtn?.addEventListener('click', closeLightbox);
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+</script>
+
+<style>
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1;
+  background: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.gallery-item img,
+.video-wrapper,
+.video-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-wrapper {
+  position: relative;
+}
+
+.play-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  padding-left: 2px;
+  backdrop-filter: blur(4px);
+}
+
+.gallery-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 0.5rem 0.5rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Lightbox Modal */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.lightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox-content {
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  justify-content: center;
+}
+
+.lightbox-content img,
+.lightbox-content video {
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 0.5rem;
+  object-fit: contain;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1001;
+}
+
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+</style>
