@@ -34,7 +34,7 @@ const themePath = getThemePath(restaurant.slug);
 
     <!-- Orden importante: global.css PRIMERO (defaults), theme DESPUÉS (pisa lo que le toca) -->
     <link rel="stylesheet" href={globalStylesHref} />
-    {themePath && <link rel="stylesheet" href={themePath} />}
+    {themePath && <link slot="head" rel="stylesheet" href={themePath} />}
   </head>
   <body>
     <Navbar
