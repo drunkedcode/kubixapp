@@ -5,6 +5,10 @@ import CircleSlider from '@/components/shared/CircleSlider.astro';
 import MiniCard from '@/components/shared/MiniCard.astro';
 import { catalog, segments } from '../data/catalog';
 import { Search, History, Building2, ChevronRight, ChevronDown } from 'lucide-astro';
+import { useTranslations } from '../i18n';
+
+// Instancia de traducción centralizada basada en la URL / entorno
+const t = useTranslations(Astro.cookies, Astro.url);
 
 const keys = catalog.map(({ segment, slug }) => ({ segment, slug }));
 
@@ -30,8 +34,8 @@ const recommended = catalog.slice(0, 6).map((c) => ({
 
     <!-- 2. Buscador -->
     <section class="container hero" data-aos="fade-down">
-      <h1 class="hero__title">Bienvenido a <span>KubixApp</span></h1>
-      <p class="hero__subtitle">Elige el tipo de negocio y escribe su nombre, o escanea su QR.</p>
+      <h1 class="hero__title">{t('index.hero.title')} <span>KubixApp</span></h1>
+      <p class="hero__subtitle">{t('index.hero.subtitle')}</p>
 
       <form
         id="company-search"
@@ -54,14 +58,14 @@ const recommended = catalog.slice(0, 6).map((c) => ({
           <input
             id="company-input"
             type="text"
-            placeholder="Nombre de la empresa"
+            placeholder={t('index.hero.searchPlaceholder')}
             autocomplete="off"
             autocapitalize="none"
-            aria-label="Nombre de la empresa"
+            aria-label={t('index.hero.searchPlaceholder')}
           />
         </label>
 
-        <button type="submit" class="btn btn--primary search__btn">Visitar</button>
+        <button type="submit" class="btn btn--primary search__btn">{t('common.buttons.visit')}</button>
       </form>
       <p id="search-error" class="search__error" role="alert" hidden></p>
     </section>
@@ -70,18 +74,18 @@ const recommended = catalog.slice(0, 6).map((c) => ({
     <section class="container block" data-aos="fade-up">
       <div class="block__row">
         <div class="block__head">
-          <History size={20} class="block__icon" aria-hidden="true" />
-          <h2 class="block__title">Tus lugares</h2>
+          <Building2 size={20} class="block__icon" aria-hidden="true" />
+          <h2 class="block__title">{t('index.places.title')}</h2>
         </div>
-        <a href="/lugares" id="see-all" class="see-all" hidden>
-          Ver todos <ChevronRight size={16} aria-hidden="true" />
+        <a href="/alls" id="see-all" class="see-all" hidden>
+          {t('common.buttons.seeAll')} <ChevronRight size={16} aria-hidden="true" />
         </a>
       </div>
 
       <div id="places-empty" class="empty">
         <Building2 size={36} class="empty__icon" aria-hidden="true" />
-        <p>Aún no tienes lugares guardados.</p>
-        <span>Escanea un QR o busca un socio para agregarlo aquí.</span>
+        <p>{t('index.places.emptyTitle')}</p>
+        <span>{t('index.places.emptySubtitle')}</span>
       </div>
 
       <div id="places-grid" class="mini-grid" hidden>
@@ -94,9 +98,14 @@ const recommended = catalog.slice(0, 6).map((c) => ({
     <!-- 4. Recomendados -->
     {recommended.length > 0 && (
       <section class="block" data-aos="fade-up">
-        <div class="container">
-          <h2 class="block__title">Recomendados en tu zona</h2>
-          <p class="block__desc">Socios que te pueden gustar</p>
+        <div class="container block__row">
+          <div>
+            <h3 class="block__title">{t('index.recommended.title')}</h3>
+            <p class="block__desc">{t('index.recommended.desc')}</p>
+          </div>
+          <a href="/alls" class="see-all">
+            {t('common.buttons.seeAll')} <ChevronRight size={16} aria-hidden="true" />
+          </a>
         </div>
         <HeroSlider slides={recommended} />
       </section>
@@ -122,7 +131,6 @@ const recommended = catalog.slice(0, 6).map((c) => ({
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      // Con un solo segmento no hay select: se usa el único que existe
       const segment = select?.value ?? form.dataset.defaultSegment ?? '';
       const url = resolveFromForm(segment, input.value, companies);
 
@@ -138,7 +146,6 @@ const recommended = catalog.slice(0, 6).map((c) => ({
   }
 
   // ---------- Seguidos y visitados ----------
-  // Muestra solo las tarjetas cuyas claves se pasan, en ese orden.
   function reveal(root: ParentNode, keys: string[]): number {
     const byKey = new Map(
       Array.from(root.querySelectorAll<HTMLElement>('[data-key]')).map((el) => [el.dataset.key!, el])
@@ -150,7 +157,7 @@ const recommended = catalog.slice(0, 6).map((c) => ({
       const el = byKey.get(k);
       if (!el) return;
       el.hidden = false;
-      el.parentElement!.appendChild(el); // reordena
+      el.parentElement!.appendChild(el);
       shown++;
     });
     return shown;
@@ -305,11 +312,11 @@ const recommended = catalog.slice(0, 6).map((c) => ({
   color: var(--brand-primary);
 }
 .block__title {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: var(--color-black);
 }
 .block__desc {
-  margin: 0.15rem 0 1rem;
+  margin: 0.15rem 0 0;
   font-size: 0.8rem;
   color: var(--text-muted);
 }

@@ -1,0 +1,287 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import GlobalLoader from '@/components/shared/GlobalLoader.astro';
+import { Globe, MapPin, Check } from 'lucide-astro';
+import { useTranslations } from '../i18n';
+
+const t = useTranslations(Astro.cookies, Astro.url);
+---
+
+<MainLayout>
+  <div class="config-page">
+    <div class="container config-container" data-aos="fade-up">
+      
+      <div class="config-header">
+        <h1>{t('config.title')}</h1>
+        <p>{t('config.subtitle')}</p>
+      </div>
+
+      <div class="config-sections">
+        
+        <!-- 1. Sección de Idioma (Guardado independiente) -->
+        <div class="config-card">
+          <div class="config-card__title-row">
+            <Globe size={20} class="text-primary" />
+            <h2>{t('config.languageTitle')}</h2>
+          </div>
+          <p class="config-card__desc">{t('config.languageDesc')}</p>
+
+          <div class="options-list">
+            <button class="option-row" data-lang-btn="pt">
+              <span class="option-row__label">🇧🇷 Português (Brasil)</span>
+              <Check size={18} class="check-icon" />
+            </button>
+            <button class="option-row" data-lang-btn="es">
+              <span class="option-row__label">🇪🇸 Español</span>
+              <Check size={18} class="check-icon" />
+            </button>
+          </div>
+
+          <div class="card-action">
+            <button id="save-lang-btn" class="btn btn--primary btn-card-save">
+              {t('common.buttons.saveChanges')}
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Sección de Ubicación (Guardado independiente) -->
+        <div class="config-card">
+          <div class="config-card__title-row">
+            <MapPin size={20} class="text-primary" />
+            <h2>{t('config.locationTitle')}</h2>
+          </div>
+          <p class="config-card__desc">{t('config.locationDesc')}</p>
+
+          <div class="input-wrapper-config">
+            <select id="location-select" class="config-select">
+              <option value="regiao-sul">{t('config.locations.sul')}</option>
+              <option value="sao-paulo">{t('config.locations.sp')}</option>
+              <option value="parana">{t('config.locations.pr')}</option>
+              <option value="santa-catarina">{t('config.locations.sc')}</option>
+            </select>
+          </div>
+
+          <div class="card-action">
+            <button id="save-location-btn" class="btn btn--primary btn-card-save">
+              {t('common.buttons.saveChanges')}
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Componente del loader global -->
+  <GlobalLoader />
+</MainLayout>
+
+<script>
+  import { setLanguage } from '../i18n/store.ts';
+
+  // ---------- Control de Idioma ----------
+  const langButtons = document.querySelectorAll('[data-lang-btn]');
+  const saveLangBtn = document.getElementById('save-lang-btn') as HTMLButtonElement | null;
+  let currentSelectedLang = localStorage.getItem('kubix_lang') || 'pt';
+
+  function updateLangUI(lang: string) {
+    langButtons.forEach(btn => {
+      if (btn.getAttribute('data-lang-btn') === lang) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  updateLangUI(currentSelectedLang);
+
+  langButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selected = btn.getAttribute('data-lang-btn');
+      if (selected) {
+        currentSelectedLang = selected;
+        updateLangUI(selected);
+      }
+    });
+  });
+
+  saveLangBtn?.addEventListener('click', () => {
+    if (window.showLoader) {
+      window.showLoader('Actualizando idioma...');
+    }
+
+    setTimeout(() => {
+      setLanguage(currentSelectedLang as 'pt' | 'es');
+      window.location.href = '/?lng=' + currentSelectedLang;
+    }, 5000);
+  });
+
+  // ---------- Control de Ubicación ----------
+  const locationSelect = document.getElementById('location-select') as HTMLSelectElement | null;
+  const saveLocationBtn = document.getElementById('save-location-btn') as HTMLButtonElement | null;
+
+  const savedLocation = localStorage.getItem('kubix_location');
+  if (savedLocation && locationSelect) {
+    locationSelect.value = savedLocation;
+  }
+
+  saveLocationBtn?.addEventListener('click', () => {
+    if (!locationSelect) return;
+
+    if (window.showLoader) {
+      window.showLoader('Guardando ubicación...');
+    }
+
+    setTimeout(() => {
+      localStorage.setItem('kubix_location', locationSelect.value);
+      if (window.hideLoader) {
+        window.hideLoader();
+      }
+      alert('¡Ubicación guardada con éxito!');
+    }, 800);
+  });
+</script>
+
+<style>
+.config-page {
+  padding: 2rem 0 6rem;
+  background: var(--bg-main, #f8fafc);
+  min-height: 90vh;
+}
+.config-container {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.config-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.config-header h1 {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-black, #0f172a);
+  margin: 0 0 0.3rem;
+}
+.config-header p {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.config-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.config-card {
+  background: var(--bg-card, #ffffff);
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+  border: 1px solid var(--border-light, #e2e8f0);
+}
+.config-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.2rem;
+}
+.text-primary {
+  color: var(--brand-primary, #D62027);
+}
+.config-card__title-row h2 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-black, #0f172a);
+  margin: 0;
+}
+.config-card__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 1.2rem;
+}
+
+/* Opciones de Idioma en Lista Vertical */
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light, #cbd5e1);
+  background: var(--bg-main, #f8fafc);
+  color: var(--text-dark, #334155);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.option-row .check-icon {
+  opacity: 0;
+  color: var(--brand-primary, #15803d);
+  transition: opacity 0.2s ease;
+}
+.option-row.active {
+  border-color: var(--brand-primary, #D62027);
+  background: rgba(214, 32, 39, 0.04);
+  color: var(--color-black, #0f172a);
+}
+.option-row.active .check-icon {
+  opacity: 1;
+}
+
+/* Selector de Ubicación */
+.input-wrapper-config {
+  width: 100%;
+}
+.config-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light, #cbd5e1);
+  background: var(--bg-main, #f8fafc);
+  color: var(--text-dark, #0f172a);
+  font-weight: 600;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+}
+.config-select:focus {
+  border-color: var(--brand-primary, #D62027);
+  background: var(--bg-card, #ffffff);
+}
+
+/* Botón de acción por cada Card */
+.card-action {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-card-save {
+  padding: 0.65rem 1.2rem;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(214, 32, 39, 0.2);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.btn-card-save:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+</style>

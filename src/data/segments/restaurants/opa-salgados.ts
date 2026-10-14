@@ -6,6 +6,8 @@ export const opaSalgados: Restaurant = {
   tagline: "Sabor que te conquista",
   phone: "(41) 9XXXX-XXXX",
   logo: "/images/restaurants/opa/opaSalgados.png",
+  splashStyle: 'geometric',
+  address:"algun lugar de capao rasso",
   splash: "/images/restaurants/opa/opa.jpg",
   isOpen: true,
   todayHours: "09:00 - 19:00",

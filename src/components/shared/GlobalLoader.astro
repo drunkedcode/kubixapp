@@ -1,0 +1,154 @@
+---
+// Componente de pantalla de carga global / Interceptor de acciones
+---
+
+<div id="global-loader" class="loader-overlay" aria-hidden="true" hidden>
+  <div class="loader-content" data-aos="scale-up">
+    <!-- Spinner creativo: Anillos orbitales / Cubos concéntricos -->
+    <div class="kubix-spinner">
+      <div class="ring ring--outer"></div>
+      <div class="ring ring--inner"></div>
+      <div class="kubix-core"></div>
+    </div>
+    
+    <!-- Mensaje dinámico -->
+    <p id="loader-message" class="loader-message">Procesando...</p>
+  </div>
+</div>
+
+<script>
+  // Funciones globales expuestas en window para activar/desactivar el loader desde cualquier fetch, interceptor o acción
+  declare global {
+    interface Window {
+      showLoader: (message?: string) => void;
+      hideLoader: () => void;
+    }
+  }
+
+  const loaderEl = document.getElementById('global-loader');
+  const messageEl = document.getElementById('loader-message');
+
+  window.showLoader = (message = 'Procesando...') => {
+    if (messageEl) messageEl.textContent = message;
+    if (loaderEl) {
+      loaderEl.hidden = false;
+      loaderEl.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden'; // Bloquea el scroll mientras carga
+    }
+  };
+
+  window.hideLoader = () => {
+    if (loaderEl) {
+      loaderEl.hidden = true;
+      loaderEl.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  };
+
+  // Opcional: Escuchar eventos globales si prefieres dispararlos por CustomEvent
+  window.addEventListener('kubix:loading:show', ((e: CustomEvent) => {
+    window.showLoader(e.detail?.message);
+  }) as EventListener);
+
+  window.addEventListener('kubix:loading:hide', () => {
+    window.hideLoader();
+  });
+</script>
+
+<style>
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.loader-overlay[hidden] {
+  display: none;
+  opacity: 0;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+  border-radius: 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+/* Spinner creativo tipo anillos orbitales "Kubix" */
+.kubix-spinner {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid transparent;
+}
+
+.ring--outer {
+  width: 100%;
+  height: 100%;
+  border-top-color: var(--brand-primary, #D62027);
+  border-right-color: var(--brand-primary, #D62027);
+  animation: spin 1s linear infinite;
+}
+
+.ring--inner {
+  width: 70%;
+  height: 70%;
+  border-bottom-color: var(--brand-secondary, #E8C85F);
+  border-left-color: var(--brand-secondary, #E8C85F);
+  animation: spin-reverse 0.8s linear infinite;
+}
+
+.kubix-core {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  border-radius: 6px;
+  animation: pulse-core 1.2s ease-in-out infinite alternate;
+}
+
+.loader-message {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-black, #0f172a);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Animaciones */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes pulse-core {
+  0% { transform: scale(0.85) rotate(0deg); opacity: 0.7; }
+  100% { transform: scale(1.15) rotate(45deg); opacity: 1; }
+}
+</style>

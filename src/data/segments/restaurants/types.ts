@@ -39,6 +39,8 @@ export interface Restaurant {
   phone: string;
   logo: string;
   splash?: string;
+  splashStyle?: 'geometric' | 'minimal' | 'neon';
+  address: string;
   isOpen: boolean;
   todayHours: string;
   schedule: ScheduleDay[];

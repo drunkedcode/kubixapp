@@ -1,0 +1,283 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import { User, Mail, Phone, Camera, Settings, ArrowRight } from 'lucide-astro';
+import { useTranslations } from '../i18n';
+
+const t = useTranslations(Astro.cookies, Astro.url);
+---
+
+<MainLayout>
+  <div class="profile-page">
+    <div class="container profile-container" data-aos="fade-up">
+      
+      <!-- Cabecera / Título -->
+      <div class="profile-header">
+        <h1>{t('profile.title')}</h1>
+        <p>{t('profile.subtitle')}</p>
+      </div>
+
+      <!-- Avatar Centrado con opción de cambio -->
+      <div class="avatar-section">
+        <div class="avatar-wrapper">
+          <img 
+            id="user-avatar"
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop&crop=faces" 
+            alt={t('profile.avatarAlt')} 
+            class="avatar-img"
+          />
+          <label for="avatar-input" class="avatar-upload-btn" title={t('profile.changePhoto')}>
+            <Camera size={18} />
+          </label>
+          <input type="file" id="avatar-input" accept="image/*" hidden />
+        </div>
+        <span class="avatar-hint">{t('profile.avatarHint')}</span>
+      </div>
+
+      <!-- Formulario de Datos (Nombre, Email, Teléfono) -->
+      <form id="profile-form" class="profile-form">
+        <div class="input-group">
+          <label for="name">
+            <User size={16} /> {t('profile.fullName')}
+          </label>
+          <input type="text" id="name" value="María Silva" placeholder={t('profile.fullNamePlaceholder')} />
+        </div>
+
+        <div class="input-group">
+          <label for="email">
+            <Mail size={16} /> {t('profile.email')}
+          </label>
+          <input type="email" id="email" value="maria.silva@example.com" placeholder="correo@domain.com" />
+        </div>
+
+        <div class="input-group">
+          <label for="phone">
+            <Phone size={16} /> {t('profile.phone')}
+          </label>
+          <input type="tel" id="phone" value="+55 11 98888-7777" placeholder="+55 ..." />
+        </div>
+
+        <button type="submit" class="btn btn--primary btn-save">{t('common.buttons.saveChanges')}</button>
+      </form>
+
+      <!-- Enlace rápido a Configuración (Idioma, Ubicación) -->
+      <div class="config-redirect-card">
+        <div class="config-redirect-info">
+          <Settings size={20} class="text-primary" />
+          <div>
+            <h3>{t('profile.configTitle')}</h3>
+            <p>{t('profile.configSubtitle')}</p>
+          </div>
+        </div>
+        <a href="/config" class="config-redirect-btn" aria-label={t('profile.goToConfig')}>
+          <ArrowRight size={18} />
+        </a>
+      </div>
+
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  // Lógica para previsualizar cambio de avatar y guardar en localStorage
+  const avatarInput = document.getElementById('avatar-input') as HTMLInputElement;
+  const userAvatar = document.getElementById('user-avatar') as HTMLImageElement;
+  const profileForm = document.getElementById('profile-form');
+
+  avatarInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        if (userAvatar && uploadEvent.target?.result) {
+          userAvatar.src = uploadEvent.target.result as string;
+          localStorage.setItem('kubix_avatar', uploadEvent.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Cargar avatar guardado previamente si existe
+  const savedAvatar = localStorage.getItem('kubix_avatar');
+  if (savedAvatar && userAvatar) {
+    userAvatar.src = savedAvatar;
+  }
+
+  profileForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+  });
+</script>
+
+<style>
+.profile-page {
+  padding: 2rem 0 6rem;
+  background: var(--bg-main, #f8fafc);
+  min-height: 90vh;
+}
+.profile-container {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.profile-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.profile-header h1 {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-black, #0f172a);
+  margin: 0 0 0.3rem;
+}
+.profile-header p {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Avatar */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+.avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-card, #ffffff);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.avatar-upload-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--brand-primary, #d62027);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
+}
+.avatar-upload-btn:hover {
+  transform: scale(1.1);
+}
+.avatar-hint {
+  font-size: 0.75rem;
+  color: var(--text-light, #94a3b8);
+  margin-top: 0.5rem;
+}
+
+/* Formulario */
+.profile-form {
+  background: var(--bg-card, #ffffff);
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid var(--border-light, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.input-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dark, #334155);
+}
+.input-group input {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-light, #cbd5e1);
+  font-size: 0.95rem;
+  outline: none;
+  background: var(--bg-main, #f8fafc);
+  color: var(--text-dark, #0f172a);
+  transition: border-color 0.2s ease;
+}
+.input-group input:focus {
+  border-color: var(--brand-primary, #d62027);
+  background: var(--bg-card, #ffffff);
+}
+.btn-save {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
+  color: white;
+  font-weight: 800;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.btn-save:hover {
+  opacity: 0.95;
+}
+
+/* Tarjeta de redirección a config */
+.config-redirect-card {
+  background: var(--bg-card, #ffffff);
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid var(--border-light, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+}
+.config-redirect-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.text-primary {
+  color: var(--brand-primary, #d62027);
+}
+.config-redirect-info h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-black, #0f172a);
+  margin: 0 0 0.1rem;
+}
+.config-redirect-info p {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+.config-redirect-btn {
+  background: var(--bg-main, #f1f5f9);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-black, #0f172a);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.config-redirect-btn:hover {
+  background: var(--border-light, #e2e8f0);
+}
+</style>

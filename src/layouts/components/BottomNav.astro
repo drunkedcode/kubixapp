@@ -1,17 +1,45 @@
 ---
+import { Home, Camera, User } from 'lucide-astro';
+import { useTranslations } from '../../i18n';
+
+// Instancia de traducción con base en la URL/idioma activo
+const t = useTranslations(Astro.url);
+
 interface Item {
   href: string;
   label: string;
   ariaLabel?: string;
-  icon: any;              // componente de lucide-astro
+  icon: any;               // componente de lucide-astro
   highlight?: boolean;    // botón destacado (cámara)
 }
 
 interface Props {
-  items: Item[];
+  items?: Item[];
 }
 
-const { items } = Astro.props;
+const defaultItems: Item[] = [
+  {
+    href: '/',
+    label: t('common.nav.home'),
+    ariaLabel: t('common.nav.home'),
+    icon: Home,
+  },
+  {
+    href: '/scan',
+    label: t('common.nav.camera'),
+    ariaLabel: t('common.nav.camera'),
+    icon: Camera,
+    highlight: true,
+  },
+  {
+    href: '/profile',
+    label: t('common.nav.profile'),
+    ariaLabel: t('common.nav.profile'),
+    icon: User,
+  },
+];
+
+const { items = defaultItems } = Astro.props;
 const path = Astro.url.pathname;
 
 const isActive = (href: string) =>
@@ -51,15 +79,15 @@ const isActive = (href: string) =>
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: var(--app-max-width);
+  max-width: var(--app-max-width, 100%);
   z-index: 9999;
   display: flex;
   justify-content: space-around;
   align-items: center;
   height: calc(4.25rem + env(safe-area-inset-bottom, 0px));
   padding: 0 1rem env(safe-area-inset-bottom, 0px);
-  background: var(--bnav-bg);
-  border-top: 1px solid var(--bnav-border);
+  background: var(--bnav-bg, rgba(15, 23, 42, 0.92));
+  border-top: 1px solid var(--bnav-border, rgba(255, 255, 255, 0.1));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
@@ -75,14 +103,14 @@ const isActive = (href: string) =>
   text-decoration: none;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--bnav-text);
+  color: var(--bnav-text, #94a3b8);
   transition: color 0.2s ease;
 }
 
 .bnav__item:hover,
 .bnav__item:focus-visible,
 .bnav__item.is-active {
-  color: var(--bnav-text-active);
+  color: var(--bnav-text-active, #f8fafc);
 }
 
 .bnav__icon {
@@ -106,10 +134,10 @@ const isActive = (href: string) =>
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--bnav-fab-bg);
-  color: var(--bnav-fab-text);
-  border: 4px solid var(--bnav-fab-ring);
-  box-shadow: var(--bnav-fab-shadow);
+  background: var(--bnav-fab-bg, linear-gradient(135deg, #d62027 0%, #e8c85f 100%));
+  color: var(--bnav-fab-text, #ffffff);
+  border: 4px solid var(--bnav-fab-ring, #0f172a);
+  box-shadow: var(--bnav-fab-shadow, 0 6px 16px rgba(214, 32, 39, 0.45));
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 

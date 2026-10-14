@@ -55,6 +55,71 @@ const getMediaInfo = (item: GalleryItem) => {
 </div>
 
 <script>
+  // ---------- Lógica del Lightbox / Galería ----------
+  const galleryItems = document.querySelectorAll<HTMLElement>('.gallery-item');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxContent = document.getElementById('lightboxContent');
+  const closeBtn = document.querySelector('.lightbox-close');
+
+  galleryItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const fullUrl = item.getAttribute('data-full');
+      const type = item.getAttribute('data-type');
+
+      if (!fullUrl || !lightboxContent || !lightbox) return;
+
+      // Limpiamos contenido previo
+      lightboxContent.innerHTML = '';
+
+      if (type === 'video') {
+        const video = document.createElement('video');
+        video.src = fullUrl;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        lightboxContent.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = fullUrl;
+        img.alt = 'Media zoom';
+        lightboxContent.appendChild(img);
+      }
+
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden'; // Evita scroll de fondo
+    });
+  });
+
+  function closeLightbox() {
+    if (!lightbox || !lightboxContent) return;
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+    
+    // Detener reproducción de videos si los hubiera al cerrar
+    const video = lightboxContent.querySelector('video');
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+    lightboxContent.innerHTML = '';
+  }
+
+  closeBtn?.addEventListener('click', closeLightbox);
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  // Cerrar con la tecla ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeLightbox();
+    }
+  });
+
+
+  // ---------- Lógica del Slider (Existente) ----------
   function initSlider(wrapper: HTMLElement) {
     const container = wrapper.querySelector<HTMLElement>('.slider-container');
     const cards = Array.from(wrapper.querySelectorAll<HTMLElement>('.slide-card'));
@@ -65,7 +130,6 @@ const getMediaInfo = (item: GalleryItem) => {
     const AUTOPLAY_MS = 4000;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Posición de scroll en la que cada tarjeta queda alineada al inicio
     function getTarget(index: number): number {
       const cRect = container!.getBoundingClientRect();
       const cardRect = cards[index].getBoundingClientRect();
@@ -99,7 +163,6 @@ const getMediaInfo = (item: GalleryItem) => {
       container!.scrollTo({ left: getTarget(index), behavior: 'smooth' });
     }
 
-    // ---------- Autoplay ----------
     let timer: number | null = null;
     let hovering = false;
     let dragging = false;
@@ -112,7 +175,6 @@ const getMediaInfo = (item: GalleryItem) => {
     function next() {
       if (!canScroll() || hovering || dragging || !inView || document.hidden) return;
       const current = getNearestIndex();
-      // Al llegar a la última, vuelve a la primera
       goToSlide(current >= cards.length - 1 ? 0 : current + 1);
     }
 
@@ -129,7 +191,6 @@ const getMediaInfo = (item: GalleryItem) => {
       timer = window.setInterval(next, AUTOPLAY_MS);
     }
 
-    // Solo avanza si el slider está visible en pantalla
     if ('IntersectionObserver' in window) {
       new IntersectionObserver((entries) => {
         inView = entries[0].isIntersecting;
@@ -139,12 +200,10 @@ const getMediaInfo = (item: GalleryItem) => {
     wrapper.addEventListener('mouseenter', () => { hovering = true; });
     wrapper.addEventListener('mouseleave', () => { hovering = false; startAutoplay(); });
 
-    // Táctil: pausa mientras hay un dedo encima
     container.addEventListener('touchstart', () => { dragging = true; stopAutoplay(); }, { passive: true });
     container.addEventListener('touchend', () => { dragging = false; startAutoplay(); }, { passive: true });
     container.addEventListener('touchcancel', () => { dragging = false; startAutoplay(); }, { passive: true });
 
-    // ---------- Sincronizar puntos con el scroll ----------
     let ticking = false;
     container.addEventListener('scroll', () => {
       if (ticking) return;
@@ -155,15 +214,13 @@ const getMediaInfo = (item: GalleryItem) => {
       });
     }, { passive: true });
 
-    // Clic en los puntos
     dots.forEach((dot, i) => {
       dot.addEventListener('click', () => {
         goToSlide(i);
-        startAutoplay(); // reinicia el temporizador
+        startAutoplay();
       });
     });
 
-    // ---------- Arrastre con mouse ----------
     let isDown = false;
     let moved = false;
     let startX = 0;

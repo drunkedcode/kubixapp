@@ -1,0 +1,206 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import MiniCard from '@/components/shared/MiniCard.astro';
+import { catalog, segments } from '../data/catalog';
+import { Search } from 'lucide-astro';
+
+const PAGE_SIZE = 15; // múltiplo de 3 columnas
+
+const sections = segments.map((seg) => ({
+  ...seg,
+  items: catalog.filter((c) => c.segment === seg.id),
+}));
+---
+
+<MainLayout>
+  <div class="all">
+
+    {sections.map((section) => (
+      <section class="container block" data-segment-section={section.id}>
+        <div class="block__head">
+          <h2 class="block__title">{section.label}</h2>
+          <span class="block__count" data-count>{section.items.length}</span>
+        </div>
+
+        <label class="search">
+          <Search size={18} class="search__icon" aria-hidden="true" />
+          <input
+            type="text"
+            class="search__input"
+            data-search
+            placeholder={`Buscar en ${section.label.toLowerCase()}`}
+            autocomplete="off"
+            autocapitalize="none"
+          />
+        </label>
+
+        <div class="empty" data-empty hidden>
+          <p>No encontramos resultados.</p>
+        </div>
+
+        <div class="mini-grid" data-grid>
+          {section.items.map((c) => (
+            <div data-item data-key={c.key} data-name={c.name.toLowerCase()}>
+              <MiniCard itemKey={c.key} href={c.href} name={c.name} logo={c.logo} isOpen={c.isOpen} />
+            </div>
+          ))}
+        </div>
+
+        <div class="sentinel" data-sentinel></div>
+      </section>
+    ))}
+
+  </div>
+</MainLayout>
+
+<script>
+  const PAGE_SIZE = 15;
+
+  function setupSection(section: HTMLElement) {
+    const grid = section.querySelector<HTMLElement>('[data-grid]');
+    const empty = section.querySelector<HTMLElement>('[data-empty]');
+    const searchInput = section.querySelector<HTMLInputElement>('[data-search]');
+    const sentinel = section.querySelector<HTMLElement>('[data-sentinel]');
+    const countEl = section.querySelector<HTMLElement>('[data-count]');
+    if (!grid || !searchInput || !sentinel) return;
+
+    const allItems = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]'));
+
+    let filtered: HTMLElement[] = allItems;
+    let revealed = 0;
+
+    function applyFilter() {
+      const term = searchInput!.value.trim().toLowerCase();
+      filtered = allItems.filter((el) => (el.dataset.name || '').includes(term));
+
+      allItems.forEach((el) => { el.hidden = true; });
+      revealed = 0;
+
+      if (countEl) countEl.textContent = String(filtered.length);
+      if (empty) empty.hidden = filtered.length > 0;
+
+      revealMore();
+    }
+
+    function revealMore() {
+      const next = filtered.slice(revealed, revealed + PAGE_SIZE);
+      next.forEach((el) => { el.hidden = false; });
+      revealed += next.length;
+    }
+
+    searchInput.addEventListener('input', () => applyFilter());
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && revealed < filtered.length) {
+          revealMore();
+        }
+      });
+    }, { rootMargin: '200px' });
+
+    observer.observe(sentinel);
+
+    applyFilter();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-segment-section]').forEach(setupSection);
+</script>
+
+<style>
+.all {
+  padding: 1rem 0 2rem;
+}
+
+.block {
+  padding-top: 1.5rem;
+}
+
+.block__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.block__title {
+  font-size: 1.2rem;
+  color: var(--color-black);
+}
+.block__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.search:focus-within {
+  border-color: var(--brand-primary);
+}
+.search__icon {
+  flex-shrink: 0;
+  color: var(--text-light);
+}
+.search__input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+.search__input::placeholder {
+  color: var(--text-light);
+}
+
+.empty {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-light);
+  border-radius: 1.25rem;
+  margin-bottom: 1rem;
+}
+.empty[hidden] {
+  display: none;
+}
+.empty p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+[data-item][hidden] {
+  display: none;
+}
+
+.sentinel {
+  height: 1px;
+}
+</style>
