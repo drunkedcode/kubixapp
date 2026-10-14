@@ -1,38 +1,27 @@
 ---
-import '../assets/styles/global.css';
+import BaseLayout from './BaseLayout.astro';
+import KubixNavbar from './components/KubixNavbar.astro';
+import BottomNav from './components/BottomNav.astro';
 import { siteData } from '../data/siteData';
+import { Home, Camera, User } from 'lucide-astro';
+
 const { company } = siteData;
+
+const navItems = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/scan', label: 'Cámara', ariaLabel: 'Escanear QR', icon: Camera, highlight: true },
+  { href: '/profile', label: 'Perfil', icon: User },
+];
 ---
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{company.name} — {company.subtitle}</title>
-    <meta name="description" content={company.description} />
-    <link rel="icon" href="/favicon.ico" />
-    
-    <!-- AOS Animaciones -->
-    <script>
-      import AOS from 'aos';
-      import 'aos/dist/aos.css';
-      
-      document.addEventListener('astro:after-swap', () => initAOS());
-      document.addEventListener('DOMContentLoaded', () => initAOS());
-      
-      function initAOS() {
-        if (!document.querySelector('[data-aos]')) return;
-        AOS.init({
-          duration: 800,
-          offset: 80,
-          once: true,
-          easing: 'ease-out-cubic',
-        });
-      }
-    </script>
-  </head>
-  <body>
-    <slot />
-  </body>
-</html>
+<BaseLayout
+  title={`${company.name} — ${company.subtitle}`}
+  description={company.description}
+  hasBottomNav
+>
+  <KubixNavbar slot="header" name={company.name} logo="/favicon.ico" />
+
+  <slot />
+
+  <BottomNav slot="footer" items={navItems} />
+</BaseLayout>

@@ -1,0 +1,79 @@
+---
+interface Props {
+  itemKey: string;
+  href: string;
+  name: string;
+  logo: string;
+  isOpen?: boolean;
+}
+
+const { itemKey, href, name, logo, isOpen } = Astro.props;
+---
+
+<a href={href} class="mini" data-key={itemKey}>
+  <img src={logo} alt="" class="mini__logo" loading="lazy" />
+  <span class="mini__name">{name}</span>
+  {isOpen !== undefined && (
+    <span class:list={['mini__status', isOpen ? 'is-open' : 'is-closed']}>
+      {isOpen ? 'Aberto' : 'Fechado'}
+    </span>
+  )}
+</a>
+
+<style>
+/* Variables: --mini-* (definidas en global.css) */
+.mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.9rem 0.5rem;
+  text-align: center;
+  background: var(--mini-bg);
+  border: 1px solid var(--mini-border);
+  border-radius: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.mini[hidden] {
+  display: none;
+}
+.mini:hover {
+  transform: translateY(-2px);
+  border-color: var(--mini-border-hover);
+}
+
+.mini__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--mini-logo-border);
+}
+
+.mini__name {
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--mini-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini__status {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.mini__status.is-open {
+  background: var(--mini-open-bg);
+  color: var(--mini-open-text);
+}
+.mini__status.is-closed {
+  background: var(--mini-closed-bg);
+  color: var(--mini-closed-text);
+}
+</style>

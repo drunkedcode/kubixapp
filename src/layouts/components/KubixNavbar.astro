@@ -1,0 +1,72 @@
+---
+import { MapPin } from 'lucide-astro';
+
+interface Props {
+  name: string;
+  logo?: string;
+  homeUrl?: string;
+}
+
+const { name, logo, homeUrl = '/' } = Astro.props;
+---
+
+<header class="knav">
+  <a href={homeUrl} class="knav__brand" aria-label={`Inicio de ${name}`}>
+    {logo && <img src={logo} alt="" class="knav__logo" width="36" height="36" />}
+    <span class="knav__name">{name}</span>
+  </a>
+
+  <span class="knav__pin" aria-hidden="true">
+    <MapPin size={22} />
+  </span>
+</header>
+
+<style>
+/* Variables: --knav-* (definidas en global.css). Este componente no define colores. */
+.knav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--knav-bg);
+  border-bottom: 2px solid var(--knav-border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.knav__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.knav__logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--knav-logo-bg);
+  border: 2px solid var(--knav-logo-border);
+}
+
+.knav__name {
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--knav-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.knav__pin {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--knav-accent);
+}
+</style>

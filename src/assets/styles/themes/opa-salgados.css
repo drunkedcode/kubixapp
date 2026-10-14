@@ -1,0 +1,49 @@
+/* =============================================
+   OPA! SALGADOS — Theme (SOLO variables, nada de estructura)
+   La estructura (botones, cards, secciones, navbar) vive en
+   global.css. Este archivo únicamente tiñe esos componentes
+   con los colores de la marca. No agregar selectores acá.
+   ============================================= */
+:root {
+  /* === Paleta de marca, basada en el logo === */
+  --color-yellow: #07ff24;
+  --color-yellow-dark: #E6A800;
+  --color-red: #B71C1C;
+  --color-red-dark: #7F0000;
+  --color-black: #1A1A1A;
+  --color-white: #FFFFFF;
+
+  /* === Opcional: tipografía propia de la empresa ===
+  --font-family: 'Poppins', system-ui, sans-serif;
+  */
+
+  /* === Roles de marca — alimentan .btn--primary/.btn--secondary,
+     el hover de .card, el subrayado de .section__title y los chips
+     de .category-btn en global.css. === */
+  --brand-primary: var(--color-red);
+  --brand-primary-dark: var(--color-red-dark);
+  --brand-primary-text: var(--color-white);
+  --brand-secondary: var(--color-yellow);
+  --brand-secondary-dark: var(--color-yellow-dark);
+  --brand-secondary-text: var(--color-black);
+
+  /* === NAVBAR — mismo set de variables que espera Navbar.astro.
+     Lo que no se redefine acá (abierto/cerrado) se hereda de
+     global.css porque es universal, no de marca. === */
+  --navbar-bg: var(--color-yellow);
+  --navbar-border: var(--color-yellow-dark);
+  --navbar-text: var(--color-black);
+  --navbar-accent: var(--color-red);
+
+  --navbar-logo-bg: var(--color-white);
+  --navbar-logo-border: var(--color-yellow-dark);
+
+  --navbar-btn-bg: rgba(0, 0, 0, 0.08);
+  --navbar-btn-bg-hover: rgba(0, 0, 0, 0.14);
+  --navbar-btn-border: rgba(0, 0, 0, 0.12);
+
+  --navbar-dropdown-bg: var(--color-white);
+  --navbar-today-bg: rgba(255, 193, 7, 0.14);
+  --navbar-today-accent: var(--color-yellow-dark);
+  --navbar-today-accent-text: var(--color-black);
+}

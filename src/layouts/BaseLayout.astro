@@ -1,0 +1,61 @@
+---
+import '../assets/styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  favicon?: string;
+  lang?: string;
+  hasBottomNav?: boolean;
+}
+
+const {
+  title,
+  description = '',
+  favicon = '/favicon.ico',
+  lang = 'pt-BR',
+  hasBottomNav = false,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href={favicon} />
+
+    <!-- Para que cada layout inyecte su tema u otros recursos -->
+    <slot name="head" />
+
+    <script>
+      import AOS from 'aos';
+      import 'aos/dist/aos.css';
+
+      function initAOS() {
+        if (!document.querySelector('[data-aos]')) return;
+        AOS.init({ duration: 800, offset: 80, once: true, easing: 'ease-out-cubic' });
+      }
+
+      document.addEventListener('DOMContentLoaded', initAOS);
+      document.addEventListener('astro:after-swap', initAOS);
+    </script>
+  </head>
+  <body>
+    <slot name="header" />
+
+    <main class:list={['app-main', { 'app-main--with-bottom-nav': hasBottomNav }]}>
+      <slot />
+    </main>
+
+    <slot name="footer" />
+  </body>
+</html>
+
+<style is:global>
+  .app-main--with-bottom-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+</style>

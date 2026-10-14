@@ -55,47 +55,177 @@ const getMediaInfo = (item: GalleryItem) => {
 </div>
 
 <script>
-  const galleryItems = document.querySelectorAll('.gallery-item');
-  const lightbox = document.getElementById('lightbox');
-  const lightboxContent = document.getElementById('lightboxContent');
-  const closeBtn = document.querySelector('.lightbox-close');
+  function initSlider(wrapper: HTMLElement) {
+    const container = wrapper.querySelector<HTMLElement>('.slider-container');
+    const cards = Array.from(wrapper.querySelectorAll<HTMLElement>('.slide-card'));
+    const dots = Array.from(wrapper.querySelectorAll<HTMLButtonElement>('.slider-dots .dot'));
 
-  galleryItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const fullSrc = item.getAttribute('data-full');
-      const type = item.getAttribute('data-type');
+    if (!container || cards.length === 0 || dots.length === 0) return;
 
-      if (!lightbox || !lightboxContent || !fullSrc) return;
+    const AUTOPLAY_MS = 4000;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      lightboxContent.innerHTML = '';
+    // Posición de scroll en la que cada tarjeta queda alineada al inicio
+    function getTarget(index: number): number {
+      const cRect = container!.getBoundingClientRect();
+      const cardRect = cards[index].getBoundingClientRect();
+      const padLeft = parseFloat(getComputedStyle(container!).paddingLeft) || 0;
+      return cardRect.left - cRect.left + container!.scrollLeft - padLeft;
+    }
 
-      if (type === 'video') {
-        const video = document.createElement('video');
-        video.src = fullSrc;
-        video.controls = true;
-        video.autoplay = true;
-        video.playsInline = true;
-        lightboxContent.appendChild(video);
-      } else {
-        const img = document.createElement('img');
-        img.src = fullSrc;
-        img.alt = 'Media ampliada';
-        lightboxContent.appendChild(img);
+    function getNearestIndex(): number {
+      const maxScroll = container!.scrollWidth - container!.clientWidth;
+      if (maxScroll > 0 && container!.scrollLeft >= maxScroll - 2) {
+        return cards.length - 1;
       }
+      let nearest = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < cards.length; i++) {
+        const dist = Math.abs(getTarget(i) - container!.scrollLeft);
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = i;
+        }
+      }
+      return nearest;
+    }
 
-      lightbox.classList.add('open');
+    function updateDots() {
+      const current = getNearestIndex();
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+    }
+
+    function goToSlide(index: number) {
+      container!.scrollTo({ left: getTarget(index), behavior: 'smooth' });
+    }
+
+    // ---------- Autoplay ----------
+    let timer: number | null = null;
+    let hovering = false;
+    let dragging = false;
+    let inView = true;
+
+    function canScroll(): boolean {
+      return container!.scrollWidth - container!.clientWidth > 4;
+    }
+
+    function next() {
+      if (!canScroll() || hovering || dragging || !inView || document.hidden) return;
+      const current = getNearestIndex();
+      // Al llegar a la última, vuelve a la primera
+      goToSlide(current >= cards.length - 1 ? 0 : current + 1);
+    }
+
+    function stopAutoplay() {
+      if (timer !== null) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function startAutoplay() {
+      if (reduceMotion) return;
+      stopAutoplay();
+      timer = window.setInterval(next, AUTOPLAY_MS);
+    }
+
+    // Solo avanza si el slider está visible en pantalla
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        inView = entries[0].isIntersecting;
+      }, { threshold: 0.3 }).observe(wrapper);
+    }
+
+    wrapper.addEventListener('mouseenter', () => { hovering = true; });
+    wrapper.addEventListener('mouseleave', () => { hovering = false; startAutoplay(); });
+
+    // Táctil: pausa mientras hay un dedo encima
+    container.addEventListener('touchstart', () => { dragging = true; stopAutoplay(); }, { passive: true });
+    container.addEventListener('touchend', () => { dragging = false; startAutoplay(); }, { passive: true });
+    container.addEventListener('touchcancel', () => { dragging = false; startAutoplay(); }, { passive: true });
+
+    // ---------- Sincronizar puntos con el scroll ----------
+    let ticking = false;
+    container.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        updateDots();
+        ticking = false;
+      });
+    }, { passive: true });
+
+    // Clic en los puntos
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        goToSlide(i);
+        startAutoplay(); // reinicia el temporizador
+      });
     });
-  });
 
-  const closeLightbox = () => {
-    lightbox?.classList.remove('open');
-    if (lightboxContent) lightboxContent.innerHTML = ''; // Detiene el video al cerrar
-  };
+    // ---------- Arrastre con mouse ----------
+    let isDown = false;
+    let moved = false;
+    let startX = 0;
+    let startScroll = 0;
 
-  closeBtn?.addEventListener('click', closeLightbox);
-  lightbox?.addEventListener('click', (e) => {
-    if (e.target === lightbox) closeLightbox();
-  });
+    container.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      isDown = true;
+      moved = false;
+      startX = e.clientX;
+      startScroll = container.scrollLeft;
+    });
+
+    window.addEventListener('pointermove', (e: PointerEvent) => {
+      if (!isDown) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) > 4) {
+        moved = true;
+        dragging = true;
+        container.style.scrollSnapType = 'none';
+        container.style.scrollBehavior = 'auto';
+        container.style.cursor = 'grabbing';
+      }
+      if (moved) {
+        container.scrollLeft = startScroll - dx;
+      }
+    });
+
+    function endDrag() {
+      if (!isDown) return;
+      isDown = false;
+      dragging = false;
+      if (!moved) return;
+      const target = getTarget(getNearestIndex());
+      container!.style.scrollSnapType = '';
+      container!.style.scrollBehavior = '';
+      container!.style.cursor = '';
+      container!.scrollTo({ left: target, behavior: 'smooth' });
+      startAutoplay();
+    }
+
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    container.addEventListener('click', (e) => {
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      }
+    }, true);
+
+    window.addEventListener('resize', updateDots);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) startAutoplay();
+    });
+
+    updateDots();
+    startAutoplay();
+  }
+
+  document.querySelectorAll<HTMLElement>('.slider-wrapper').forEach(initSlider);
 </script>
 
 <style>

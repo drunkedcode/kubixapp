@@ -1,8 +1,15 @@
 ---
 import type { Restaurant } from '../data/segments/restaurants/types';
-import Navbar from '../components/shared/Navbar.astro';
-import FloatingMenuBtn from '../components/restaurants/FloatingMenuBtn.astro';
+import Navbar from './components/Navbar.astro';
+import FloatingActions from '../components/restaurants/FloatingActions.astro';
 import { getThemePath } from '../assets/styles/index';
+
+// OJO: usamos ?url en vez de un import normal. Un `import '...css'` lo
+// mete Astro al final del <head> automáticamente (después de cualquier
+// <link> que escribamos a mano), y por eso global.css siempre le ganaba
+// al theme en la cascada. Con ?url obtenemos la ruta y controlamos
+// nosotros mismos el orden con un <link> explícito.
+import globalStylesHref from '../assets/styles/global.css?url';
 
 interface Props {
   restaurant: Restaurant;
@@ -10,7 +17,9 @@ interface Props {
 
 const { restaurant } = Astro.props;
 
-//  Elegimos el tema automáticamente
+// Elegimos el tema automáticamente. Puede ser null si el negocio no
+// tiene theme propio todavía — en ese caso la página se queda con los
+// defaults de global.css, nunca con los colores de otro negocio.
 const themePath = getThemePath(restaurant.slug);
 ---
 
@@ -22,13 +31,12 @@ const themePath = getThemePath(restaurant.slug);
     <title>{restaurant.name} — {restaurant.tagline}</title>
     <meta name="description" content={`${restaurant.name} — ${restaurant.tagline}`} />
     <link rel="icon" href={restaurant.logo} />
-    
-    <!--  Estilos: Global + Tema del restaurante -->
-    <link rel="stylesheet" href="/src/assets/styles/global.css" />
-    <link rel="stylesheet" href={themePath} />
+
+    <!-- Orden importante: global.css PRIMERO (defaults), theme DESPUÉS (pisa lo que le toca) -->
+    <link rel="stylesheet" href={globalStylesHref} />
+    {themePath && <link rel="stylesheet" href={themePath} />}
   </head>
   <body>
-    <!-- Pasamos datos al Navbar -->
     <Navbar
       name={restaurant.name}
       tagline={restaurant.tagline}
@@ -38,13 +46,10 @@ const themePath = getThemePath(restaurant.slug);
       schedule={restaurant.schedule}
       homeUrl={`/restaurants/${restaurant.slug}`}
     />
-    
+
     <main>
       <slot />
     </main>
 
-    {Astro.props.showFloatingBtn !== false && (
-      <FloatingMenuBtn slug={restaurant.slug} menuPath={restaurant.menuPath} />
-    )}
   </body>
 </html>

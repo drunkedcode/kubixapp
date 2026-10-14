@@ -1,237 +1,366 @@
 ---
 import MainLayout from '@/layouts/MainLayout.astro';
-import { allRestaurants } from '../data/segments/restaurants';
-import { UtensilsCrossed, MapPin, ChevronRight } from 'lucide-astro';
+import HeroSlider from '@/components/shared/HeroSlider.astro';
+import CircleSlider from '@/components/shared/CircleSlider.astro';
+import MiniCard from '@/components/shared/MiniCard.astro';
+import { catalog, segments } from '../data/catalog';
+import { Search, History, Building2, ChevronRight, ChevronDown } from 'lucide-astro';
 
-// Filtramos SOLO los que existen y tienen slug
-const restaurantesValidos = allRestaurants.filter(r => r && r.slug);
+const keys = catalog.map(({ segment, slug }) => ({ segment, slug }));
+
+// Mock: cuando exista backend, esta línea se reemplaza por una llamada a api.ts
+const recommended = catalog.slice(0, 6).map((c) => ({
+  id: c.key,
+  image: c.logo,
+  title: c.name,
+  subtitle: c.tagline,
+  href: c.href,
+}));
 ---
 
 <MainLayout>
-  <section class="home-page">
-    <div class="container">
-      <!-- Hero / Presentación -->
-      <div class="home-hero" data-aos="fade-down">
-        <h1 class="home-hero__title">
-          Bienvenido a <span>KubixApp</span>
-        </h1>
-        <p class="home-hero__subtitle">
-          Descubre los mejores sabores de nuestra región. Tu menú digital, siempre contigo.
-        </p>
-        <a href="/restaurants" class="home-hero__btn">
-          <UtensilsCrossed size={18} />
-          Ver Restaurantes
-          <ChevronRight size={16} />
+  <div class="home">
+
+    <!-- 1. Seguidos (círculos). Se muestra solo si hay seguidos -->
+    <section class="block" data-circles hidden>
+      <CircleSlider
+        items={catalog.map((c) => ({ key: c.key, href: c.href, name: c.name, logo: c.logo }))}
+      />
+    </section>
+
+    <!-- 2. Buscador -->
+    <section class="container hero" data-aos="fade-down">
+      <h1 class="hero__title">Bienvenido a <span>KubixApp</span></h1>
+      <p class="hero__subtitle">Elige el tipo de negocio y escribe su nombre, o escanea su QR.</p>
+
+      <form
+        id="company-search"
+        class="search"
+        data-keys={JSON.stringify(keys)}
+        data-default-segment={segments[0]?.id ?? ''}
+        novalidate
+      >
+        {segments.length > 1 && (
+          <label class="search__select">
+            <select id="segment-select" aria-label="Tipo de negocio">
+              {segments.map((s) => <option value={s.id}>{s.label}</option>)}
+            </select>
+            <ChevronDown size={16} class="search__chevron" aria-hidden="true" />
+          </label>
+        )}
+
+        <label class="search__field">
+          <Search size={20} class="search__icon" aria-hidden="true" />
+          <input
+            id="company-input"
+            type="text"
+            placeholder="Nombre de la empresa"
+            autocomplete="off"
+            autocapitalize="none"
+            aria-label="Nombre de la empresa"
+          />
+        </label>
+
+        <button type="submit" class="btn btn--primary search__btn">Visitar</button>
+      </form>
+      <p id="search-error" class="search__error" role="alert" hidden></p>
+    </section>
+
+    <!-- 3. Visitados recientes (grid de 3 columnas, máx. 6) -->
+    <section class="container block" data-aos="fade-up">
+      <div class="block__row">
+        <div class="block__head">
+          <History size={20} class="block__icon" aria-hidden="true" />
+          <h2 class="block__title">Tus lugares</h2>
+        </div>
+        <a href="/lugares" id="see-all" class="see-all" hidden>
+          Ver todos <ChevronRight size={16} aria-hidden="true" />
         </a>
       </div>
 
-      <!-- Tarjetas de restaurantes destacados -->
-      <div class="home-section" data-aos="fade-up">
-        <h2 class="home-section__title">Nuestros Socios</h2>
-        <p class="home-section__desc">Elige y conoce cada uno de ellos</p>
-
-        <!-- ⚠️ Mensaje si no aparecen -->
-        {restaurantesValidos.length === 0 && (
-          <p style="text-align:center; color:red; padding:2rem;">
-            ⚠️ No se cargaron los restaurantes — revisa el archivo de importación
-          </p>
-        )}
-
-        <div class="home-cards">
-          {restaurantesValidos.map((restaurant, index) => (
-            <a
-              href={`/restaurants/${restaurant.slug}/splash`}
-              class="home-card"
-              key={restaurant.slug}
-              data-aos="fade-up"
-              data-aos-delay={100 + index * 100}
-            >
-              <div class="home-card__top">
-                <img
-                  src={restaurant.logo}
-                  alt={restaurant.name}
-                  class="home-card__logo"
-                  loading="lazy"
-                />
-                <span class="home-card__status">
-                  {restaurant.isOpen ? '🟢 Aberto' : '🔴 Fechado'}
-                </span>
-              </div>
-              <h3 class="home-card__name">{restaurant.name}</h3>
-              <p class="home-card__tag">{restaurant.tagline}</p>
-              <div class="home-card__info">
-                <MapPin size={14} />
-                <span>{restaurant.phone}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <div class="home-all-link">
-          <a href="/restaurants" class="btn-all">
-            Ver todos <ChevronRight size={16} />
-          </a>
-        </div>
+      <div id="places-empty" class="empty">
+        <Building2 size={36} class="empty__icon" aria-hidden="true" />
+        <p>Aún no tienes lugares guardados.</p>
+        <span>Escanea un QR o busca un socio para agregarlo aquí.</span>
       </div>
-    </div>
-  </section>
+
+      <div id="places-grid" class="mini-grid" hidden>
+        {catalog.map((c) => (
+          <MiniCard itemKey={c.key} href={c.href} name={c.name} logo={c.logo} isOpen={c.isOpen} />
+        ))}
+      </div>
+    </section>
+
+    <!-- 4. Recomendados -->
+    {recommended.length > 0 && (
+      <section class="block" data-aos="fade-up">
+        <div class="container">
+          <h2 class="block__title">Recomendados en tu zona</h2>
+          <p class="block__desc">Socios que te pueden gustar</p>
+        </div>
+        <HeroSlider slides={recommended} />
+      </section>
+    )}
+
+  </div>
 </MainLayout>
 
+<script>
+  import { getFollowing, getVisited } from '../lib/history';
+  import { resolveFromForm, type CompanyKey } from '../lib/resolver';
+
+  // ---------- Buscador ----------
+  const form = document.getElementById('company-search') as HTMLFormElement | null;
+  const input = document.getElementById('company-input') as HTMLInputElement | null;
+  const select = document.getElementById('segment-select') as HTMLSelectElement | null;
+  const errorEl = document.getElementById('search-error');
+
+  if (form && input && errorEl) {
+    const companies: CompanyKey[] = JSON.parse(form.dataset.keys || '[]');
+
+    input.addEventListener('input', () => { errorEl.hidden = true; });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Con un solo segmento no hay select: se usa el único que existe
+      const segment = select?.value ?? form.dataset.defaultSegment ?? '';
+      const url = resolveFromForm(segment, input.value, companies);
+
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+      errorEl.textContent = input.value.trim()
+        ? 'No encontramos esa empresa. Revisa el nombre.'
+        : 'Escribe el nombre de una empresa.';
+      errorEl.hidden = false;
+    });
+  }
+
+  // ---------- Seguidos y visitados ----------
+  // Muestra solo las tarjetas cuyas claves se pasan, en ese orden.
+  function reveal(root: ParentNode, keys: string[]): number {
+    const byKey = new Map(
+      Array.from(root.querySelectorAll<HTMLElement>('[data-key]')).map((el) => [el.dataset.key!, el])
+    );
+    byKey.forEach((el) => { el.hidden = true; });
+
+    let shown = 0;
+    keys.forEach((k) => {
+      const el = byKey.get(k);
+      if (!el) return;
+      el.hidden = false;
+      el.parentElement!.appendChild(el); // reordena
+      shown++;
+    });
+    return shown;
+  }
+
+  const following = getFollowing();
+  const recent = getVisited().filter((k) => !following.includes(k)).slice(0, 6);
+
+  const circles = document.querySelector<HTMLElement>('[data-circles]');
+  const grid = document.getElementById('places-grid');
+  const empty = document.getElementById('places-empty');
+  const seeAll = document.getElementById('see-all');
+
+  const nFollowing = circles ? reveal(circles, following) : 0;
+  const nRecent = grid ? reveal(grid, recent) : 0;
+
+  if (circles) circles.hidden = nFollowing === 0;
+  if (grid) grid.hidden = nRecent === 0;
+  if (empty) empty.hidden = nFollowing + nRecent > 0;
+  if (seeAll) seeAll.hidden = nFollowing + nRecent === 0;
+</script>
+
 <style>
-/* =============================================
-   PÁGINA PRINCIPAL — KubixApp
-   ============================================= */
-.home-page {
-  padding: 4rem 0 6rem;
-  min-height: 90vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+.home {
+  padding: 1rem 0;
 }
+
 /* Hero */
-.home-hero {
+.hero {
   text-align: center;
-  padding: 3rem 0 4rem;
-  max-width: 720px;
-  margin: 0 auto;
+  padding: 1.25rem 0 1rem;
 }
-.home-hero__title {
-  font-size: 2.2rem;
+.hero__title {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
   font-weight: 900;
-  color: #0f172a;
-  margin: 0 0 1rem;
-  line-height: 1.2;
+  color: var(--color-black);
 }
-.home-hero__title span {
-  background: linear-gradient(90deg, #D62027, #FFE100);
+.hero__title span {
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-.home-hero__subtitle {
-  font-size: 1.05rem;
-  color: #64748b;
-  margin: 0 0 2rem;
-  line-height: 1.6;
+.hero__subtitle {
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
-.home-hero__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(90deg, #D62027, #E8C85F);
-  color: white;
-  font-weight: 800;
-  font-size: 1rem;
-  border-radius: 3rem;
-  text-decoration: none;
-  box-shadow: 0 4px 16px rgba(214, 32, 39, 0.25);
-  transition: all 0.3s ease;
-}
-.home-hero__btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(214, 32, 39, 0.35);
-  color: white;
-}
-/* Sección de tarjetas */
-.home-section {
-  padding-top: 2rem;
-}
-.home-section__title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #0f172a;
-  text-align: center;
-  margin: 0 0 0.3rem;
-}
-.home-section__desc {
-  text-align: center;
-  color: #64748b;
-  margin: 0 0 2.5rem;
-}
-/* Grilla de tarjetas */
-.home-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-}
-@media (min-width: 640px) {
-  .home-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (min-width: 1024px) {
-  .home-cards {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-  }
-}
-/* Tarjeta */
-.home-card {
-  background: white;
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  text-decoration: none;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-.home-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
-  border-color: #D62027;
-}
-.home-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.home-card__logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #f1f5f9;
-}
-.home-card__status {
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.home-card__name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 0.3rem;
-}
-.home-card__tag {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 0 0 1rem;
-}
-.home-card__info {
+
+/* Buscador */
+.search {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.search:focus-within {
+  border-color: var(--brand-primary);
+}
+
+.search__select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 0.4rem;
+  border-right: 1px solid var(--border-light);
+}
+.search__select select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.5rem 1.4rem 0.5rem 0.6rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
   font-size: 0.8rem;
-  color: #64748b;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
 }
-.home-all-link {
-  text-align: center;
-  margin-top: 2.5rem;
+.search__chevron {
+  position: absolute;
+  right: 0.35rem;
+  pointer-events: none;
+  color: var(--text-muted);
 }
-.btn-all {
+
+.search__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  padding-left: 0.5rem;
+}
+.search__icon {
+  flex-shrink: 0;
+  color: var(--text-light);
+}
+.search__field input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+.search__field input::placeholder {
+  color: var(--text-light);
+}
+.search__btn {
+  width: auto;
+  flex-shrink: 0;
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
+}
+.search__error {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-danger-text);
+}
+
+/* Bloques */
+.block {
+  padding-top: 1.5rem;
+}
+.block[hidden] {
+  display: none;
+}
+.block__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.block__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.block__icon {
+  color: var(--brand-primary);
+}
+.block__title {
+  font-size: 1.2rem;
+  color: var(--color-black);
+}
+.block__desc {
+  margin: 0.15rem 0 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.see-all {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.8rem 2rem;
-  border: 2px solid #D62027;
-  color: #D62027;
+  gap: 0.2rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  border-radius: 3rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
+  color: var(--brand-primary);
+  white-space: nowrap;
 }
-.btn-all:hover {
-  background: #D62027;
-  color: white;
+.see-all[hidden] {
+  display: none;
+}
+
+/* Estado vacío */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-light);
+  border-radius: 1.25rem;
+}
+.empty[hidden] {
+  display: none;
+}
+.empty__icon {
+  color: var(--text-light);
+}
+.empty p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.empty span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Grid de mini cards */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.mini-grid[hidden] {
+  display: none;
 }
 </style>

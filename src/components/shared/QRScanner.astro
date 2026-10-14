@@ -1,12 +1,13 @@
 ---
-// Componente de Escáner QR optimizado para PWA
+// src/components/QRScanner.astro
 ---
 
 <div class="qr-scanner-wrapper">
-  <div id="reader"></div>
+  <div id="reader" class="scanner-container"></div>
   <div id="scanner-result" class="scanner-result hidden"></div>
+  
   <button id="start-camera-btn" class="scanner-btn">
-    Escanear QR de la Mesa
+     Escanear QR
   </button>
 </div>
 
@@ -23,35 +24,35 @@
     try {
       html5QrCode = new Html5Qrcode("reader");
       
-      const qrCodeSuccessCallback = (decodedText: string, decodedResult: any) => {
-        // Pausar o detener el escáner al detectar con éxito
+      const qrCodeSuccessCallback = (decodedText: string) => {
         if (html5QrCode && html5QrCode.isScanning) {
           html5QrCode.stop().then(() => {
             if (resultDiv) {
-              resultDiv.textContent = `¡Código detectado: ${decodedText}!`;
+              resultDiv.textContent = `Código leído: ${decodedText}`;
               resultDiv.classList.remove("hidden");
             }
-            // Aquí puedes redirigir o procesar la URL escaneada
-            // window.location.href = decodedText;
-          }).catch(err => console.error("Error al detener la cámara", err));
+            
+            // Si el QR contiene una URL del menú o mesa, redirigimos automáticamente:
+            if (decodedText.startsWith("http://") || decodedText.startsWith("https://") || decodedText.startsWith("/")) {
+              window.location.href = decodedText;
+            }
+          }).catch(err => console.error("Error al apagar cámara:", err));
         }
       };
 
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-      // Iniciar con la cámara trasera por defecto en móviles
+      // Inicia pidiendo la cámara trasera ('environment')
       await html5QrCode.start(
         { facingMode: "environment" },
         config,
         qrCodeSuccessCallback,
-        (errorMessage) => {
-          // Errores de escaneo continuo (se pueden ignorar ya que busca constantemente)
-        }
+        () => {} // Callback silencioso para frames sin QR
       );
     } catch (err) {
       console.error("No se pudo iniciar la cámara:", err);
-      alert("No se pudo acceder a la cámara. Verifica los permisos del navegador.");
-      if (startBtn) startBtn.style.display = "block";
+      alert("No se pudo acceder a la cámara. Verifica los permisos de tu navegador.");
+      if (startBtn) startBtn.style.display = "inline-block";
     }
   });
 </script>
@@ -65,18 +66,20 @@
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
+    padding: 1rem;
   }
 
-  #reader {
+  .scanner-container {
     width: 100%;
     border-radius: 1rem;
     overflow: hidden;
     background: #0f172a;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   }
 
   .scanner-btn {
     padding: 0.8rem 1.5rem;
-    background: linear-gradient(90deg, #D62027, #E8C85F);
+    background: linear-gradient(135deg, #d62027, #e8c85f);
     color: white;
     font-weight: 700;
     border: none;
@@ -86,18 +89,19 @@
     transition: transform 0.2s ease;
   }
 
-  .scanner-btn:hover {
-    transform: translateY(-2px);
+  .scanner-btn:active {
+    transform: scale(0.98);
   }
 
   .scanner-result {
-    padding: 1rem;
+    padding: 0.8rem 1.2rem;
     background: #16a34a;
     color: white;
     font-weight: bold;
     border-radius: 0.5rem;
     text-align: center;
     width: 100%;
+    word-break: break-all;
   }
 
   .hidden {

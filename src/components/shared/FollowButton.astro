@@ -1,0 +1,69 @@
+---
+import { Star } from 'lucide-astro';
+
+interface Props {
+  itemKey: string;
+}
+
+const { itemKey } = Astro.props;
+---
+
+<button
+  type="button"
+  class="follow"
+  data-follow={itemKey}
+  aria-pressed="false"
+  aria-label="Seguir"
+  title="Seguir"
+>
+  <Star size={20} aria-hidden="true" />
+</button>
+
+<script>
+  import { isFollowing, toggleFollow } from '../../lib/history';
+
+  document.querySelectorAll<HTMLButtonElement>('[data-follow]').forEach((btn) => {
+    const key = btn.dataset.follow!;
+
+    const paint = (on: boolean) => {
+      const text = on ? 'Siguiendo' : 'Seguir';
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', text);
+      btn.title = text;
+    };
+
+    paint(isFollowing(key));
+    btn.addEventListener('click', () => paint(toggleFollow(key)));
+  });
+</script>
+
+<style>
+/* Variables: --follow-*, --fab-sub-shadow (definidas en global.css) */
+.follow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--follow-bg);
+  color: var(--follow-text);
+  border: 1.5px solid var(--follow-border);
+  box-shadow: var(--fab-sub-shadow);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.follow:active {
+  transform: scale(0.94);
+}
+.follow.is-on {
+  background: var(--follow-active-bg);
+  color: var(--follow-active-text);
+  border-color: var(--follow-active-border);
+}
+.follow.is-on :global(svg) {
+  fill: currentColor;
+}
+</style>

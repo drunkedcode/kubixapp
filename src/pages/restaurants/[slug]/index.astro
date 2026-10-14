@@ -1,9 +1,9 @@
 ---
 import { allRestaurants } from '@/data/segments/restaurants';
 import RestaurantLayout from '@/layouts/RestaurantLayout.astro';
-import HeroSlider from '@/components/restaurants/HeroSlider.astro';
+import HeroSlider from '@/components/shared/HeroSlider.astro';
 import GalleryGrid from '@/components/restaurants/GalleryGrid.astro';
-import SocialLinks from '@/components/restaurants/SocialLinks.astro';
+import FloatingActions from '@/components/restaurants/FloatingActions.astro';
 
 export async function getStaticPaths() {
   // Filtramos solo los que existen y tienen slug — NUNCA falla
@@ -20,12 +20,17 @@ if (!restaurant) return Astro.redirect('/restaurants');
 ---
 
 <RestaurantLayout restaurant={restaurant}>
-  <main>
+  <div>
     <!-- Slider con promociones -->
     <HeroSlider slides={restaurant.heroSlider} />
     <!-- Galería de fotos -->
     <GalleryGrid items={restaurant.gallery} />
-    <!-- Redes sociales -->
-    <SocialLinks links={restaurant.social} name={restaurant.name} />
-  </main>
+  </div>
+
+  <!-- Seguir, redes y cardápio (solo en el index) -->
+  <FloatingActions
+    slug={restaurant.slug}
+    menuPath={restaurant.menuPath}
+    social={restaurant.social}
+  />
 </RestaurantLayout>

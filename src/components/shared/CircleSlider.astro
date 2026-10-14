@@ -1,0 +1,132 @@
+---
+interface Item {
+  key: string;
+  href: string;
+  name: string;
+  logo: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="circle-slider">
+  <div class="circle-slider__track">
+    {items.map((item) => (
+      <a href={item.href} class="circle" data-key={item.key} draggable="false">
+        <span class="circle__ring">
+          <img src={item.logo} alt="" class="circle__img" loading="lazy" draggable="false" />
+        </span>
+        <span class="circle__name">{item.name}</span>
+      </a>
+    ))}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.circle-slider__track').forEach((track) => {
+    let down = false;
+    let moved = false;
+    let startX = 0;
+    let startLeft = 0;
+
+    track.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      down = true;
+      moved = false;
+      startX = e.clientX;
+      startLeft = track.scrollLeft;
+    });
+
+    window.addEventListener('pointermove', (e: PointerEvent) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) > 4) {
+        moved = true;
+        track.style.cursor = 'grabbing';
+      }
+      if (moved) track.scrollLeft = startLeft - dx;
+    });
+
+    const end = () => {
+      down = false;
+      track.style.cursor = '';
+    };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+
+    // Un arrastre no debe abrir el enlace
+    track.addEventListener('click', (e) => {
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      }
+    }, true);
+  });
+</script>
+
+<style>
+/* Variables: --story-ring, --story-ring-gap, --story-text (definidas en global.css) */
+.circle-slider__track {
+  display: flex;
+  gap: 1rem;
+  padding: 0.25rem 1rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+}
+.circle-slider__track::-webkit-scrollbar {
+  display: none;
+}
+
+.circle {
+  flex: 0 0 auto;
+  width: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+.circle[hidden] {
+  display: none;
+}
+
+.circle__ring {
+  display: block;
+  width: 4.25rem;
+  height: 4.25rem;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--story-ring);
+  transition: transform 0.2s ease;
+}
+.circle:active .circle__ring {
+  transform: scale(0.94);
+}
+
+.circle__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--story-ring-gap);
+}
+
+.circle__name {
+  width: 100%;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--story-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
