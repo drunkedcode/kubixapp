@@ -1,63 +1,57 @@
 ---
 import { allRestaurants } from '../../../data/segments/restaurants';
 import { getThemePath } from '../../../assets/styles/index';
+import type { SplashData } from '@/types';
 
-// Importamos directamente las plantillas de splash disponibles
 import SplashGeometric from '../../../components/splash/SplashGeometric.astro';
 import SplashMinimal from '../../../components/splash/SplashMinimal.astro';
 import SplashNeon from '../../../components/splash/SplashNeon.astro';
 
 export async function getStaticPaths() {
   const validos = allRestaurants.filter(r => r && r.slug);
-  return validos.map((restaurant) => ({
-    params: { slug: restaurant.slug },
-  }));
+  return validos.map((restaurant) => ({ params: { slug: restaurant.slug } }));
 }
 
 const { slug } = Astro.params;
 const restaurant = allRestaurants.find(r => r && r.slug === slug);
-
 if (!restaurant) return Astro.redirect('/404');
 
-// Determinamos el estilo (por defecto geométrico si no está definido)
 const style = restaurant.splashStyle || 'geometric';
-
-// Mismo theme que usa la página principal del restaurante
 const themePath = getThemePath(slug);
-
-// Ruta de destino tras finalizar la animación
 const destino = `/restaurants/${slug}`;
+
+// Adaptador: acá vive el conocimiento de "esto es un Restaurant",
+// los componentes de splash reciben la forma genérica nomás.
+const splashData: SplashData = {
+  slug: restaurant.slug,
+  name: restaurant.name,
+  tagline: restaurant.tagline,
+  logo: restaurant.logo,
+  splash: restaurant.splash,
+  previewImages: restaurant.heroSlider?.map((h) => h.image),
+};
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{restaurant.name} - Cargando...</title>
+    <title>{restaurant.name} - Carregando...</title>
     {themePath && <link rel="stylesheet" href={themePath} />}
   </head>
   <body>
-    <!-- Renderizado condicional directo en el splash.astro -->
-    {style === 'geometric' && <SplashGeometric restaurant={restaurant} />}
-    {style === 'minimal' && <SplashMinimal restaurant={restaurant} />}
-    {style === 'neon' && <SplashNeon restaurant={restaurant} />}
+    {style === 'geometric' && <SplashGeometric data={splashData} />}
+    {style === 'minimal' && <SplashMinimal data={splashData} />}
+    {style === 'neon' && <SplashNeon data={splashData} />}
 
-    <!-- Script que controla el tiempo del Splash y ejecuta la redirección -->
     <script define:vars={{ destino }}>
-      setTimeout(() => {
-        window.location.href = destino;
-      }, 5000);
+      setTimeout(() => { window.location.href = destino; }, 5000);
     </script>
 
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body {
-        background: var(--navbar-bg, #1A1D29);
-        min-height: 100vh;
-        font-family: system-ui, sans-serif;
-        overflow: hidden;
-      }
+      body { min-height: 100vh; font-family: system-ui, sans-serif; overflow: hidden; }
     </style>
   </body>
 </html>

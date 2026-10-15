@@ -13,9 +13,6 @@
   --color-black: #1A1A1A;
   --color-white: #FFFFFF;
 
-  /* === Opcional: tipografía propia de la empresa ===
-  --font-family: 'Poppins', system-ui, sans-serif;
-  */
 
   /* === Roles de marca — alimentan .btn--primary/.btn--secondary,
      el hover de .card, el subrayado de .section__title y los chips
@@ -46,4 +43,7 @@
   --navbar-today-bg: rgba(255, 210, 0, 0.12);
   --navbar-today-accent: var(--color-yellow-dark);
   --navbar-today-accent-text: var(--color-black);
+
+    /* === SPLASH === */
+  --splash-overlay: var(--color-black);
 }

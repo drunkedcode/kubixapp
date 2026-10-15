@@ -1,26 +1,24 @@
 ---
-import type { Restaurant } from '@/types';
-interface Props { restaurant: Restaurant; }
-const { restaurant } = Astro.props;
-
-const secondImage = restaurant.heroSlider?.[1]?.image || restaurant.logo;
+import type { SplashData } from '@/types';
+interface Props { data: SplashData; }
+const { data } = Astro.props;
+const secondImage = data.previewImages?.[1] || data.logo;
 ---
-<div class="splash-theme splash-neon" style={`--splash-bg: url(${restaurant.splash});`}>
+<div class="splash-theme splash-neon" style={`--splash-bg: url(${data.splash});`}>
   <div class="splash-overlay"></div>
 
-  <!-- Imagen lateral izquierda deslizada -->
   <div class="side-preview left">
-    <img src={secondImage} alt="Preview" />
+    <img src={secondImage} alt="" />
   </div>
 
   <div class="neon-content-wrapper">
     <div class="neon-badge-box">
-      <img src={restaurant.logo} alt={restaurant.name} />
+      <img src={data.logo} alt={data.name} />
     </div>
     <div class="neon-texts">
       <span class="neon-pill">EXPERIÊNCIA EXCLUSIVA</span>
-      <h1>{restaurant.name}</h1>
-      <p>{restaurant.tagline}</p>
+      <h1>{data.name}</h1>
+      <p>{data.tagline}</p>
     </div>
   </div>
 </div>
@@ -33,22 +31,19 @@ const secondImage = restaurant.heroSlider?.[1]?.image || restaurant.logo;
 }
 .splash-overlay {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at center, rgba(15,23,42,0.88) 0%, rgba(5,5,8,0.97) 100%);
+  background: radial-gradient(circle at center,
+    color-mix(in srgb, var(--splash-overlay) 88%, transparent) 0%,
+    color-mix(in srgb, var(--splash-overlay) 97%, transparent) 100%);
 }
 
-/* Imagen lateral decorativa flotando desde la izquierda */
 .side-preview {
-  position: absolute;
-  bottom: 12%;
-  left: -20px;
-  width: 130px;
-  height: 130px;
-  border-radius: 1rem;
-  overflow: hidden;
-  border: 2px solid var(--brand-secondary, #FFD200);
+  position: absolute; bottom: 12%; left: -20px;
+  width: 130px; height: 130px; border-radius: 1rem; overflow: hidden;
+  border: 2px solid var(--brand-secondary);
   box-shadow: 0 10px 30px rgba(0,0,0,0.7);
   opacity: 0;
-  animation: slide-in-left 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  animation: slide-in-left 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards,
+             drift-left 4.5s ease-in-out 1s infinite;
 }
 .side-preview img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -57,49 +52,50 @@ const secondImage = restaurant.heroSlider?.[1]?.image || restaurant.logo;
   display: flex; flex-direction: column; align-items: center; text-align: center;
   gap: 1.4rem; padding: 0 1.5rem; max-width: 380px;
 }
-
 .neon-badge-box {
   width: 100px; height: 100px; border-radius: 24px;
   background: rgba(0,0,0,0.8);
-  border: 2px solid var(--brand-secondary, #FFD200);
-  box-shadow: 0 0 25px var(--brand-primary, #D62027);
-  display: flex; align-items: center; justify-content: center;
-  padding: 0.5rem;
+  border: 2px solid var(--brand-secondary);
+  display: flex; align-items: center; justify-content: center; padding: 0.5rem;
   opacity: 0;
-  animation: pop-neon 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s forwards;
+  animation: pop-neon 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s forwards,
+             neon-flicker 2.8s ease-in-out 0.9s infinite;
 }
 .neon-badge-box img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
 
-.neon-texts {
-  opacity: 0;
-  animation: fade-up-neon 0.8s ease 0.3s forwards;
-}
+.neon-texts { opacity: 0; animation: fade-up-neon 0.8s ease 0.3s forwards; }
 .neon-pill {
   display: inline-block; font-size: 0.65rem; font-weight: 900; letter-spacing: 0.15em;
-  color: var(--brand-secondary, #FFD200); background: rgba(255, 210, 0, 0.1);
+  color: var(--brand-secondary);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, transparent);
   padding: 0.25rem 0.75rem; border-radius: 20px; margin-bottom: 0.4rem;
-  box-shadow: 0 0 10px rgba(255,210,0,0.2);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand-secondary) 20%, transparent);
 }
-.neon-texts h1 { 
-  font-size: 2.3rem; font-weight: 900; color: white; margin: 0 0 0.3rem; 
-  text-shadow: 0 0 12px var(--brand-primary, #D62027);
+.neon-texts h1 {
+  font-size: 2.3rem; font-weight: 900; color: white; margin: 0 0 0.3rem;
+  text-shadow: 0 0 12px var(--brand-primary);
+  animation: text-flicker 3.2s ease-in-out 1.4s infinite;
 }
-.neon-texts p { 
-  font-size: 0.9rem; font-weight: 700; color: var(--brand-secondary, #FFD200); 
-  margin: 0; text-transform: uppercase; letter-spacing: 0.08em; 
+.neon-texts p {
+  font-size: 0.9rem; font-weight: 700; color: var(--brand-secondary);
+  margin: 0; text-transform: uppercase; letter-spacing: 0.08em;
 }
 
-/* Animaciones */
-@keyframes slide-in-left {
-  0% { transform: translateX(-60px) rotate(-5deg); opacity: 0; }
-  100% { transform: translateX(0) rotate(-2deg); opacity: 0.85; }
+@keyframes slide-in-left { 0% { transform: translateX(-60px) rotate(-5deg); opacity: 0; } 100% { transform: translateX(0) rotate(-2deg); opacity: 0.85; } }
+@keyframes pop-neon { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes fade-up-neon { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes drift-left { 0%, 100% { transform: translateX(0) rotate(-2deg); } 50% { transform: translateX(-6px) rotate(-4deg); } }
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 54%, 56%, 100% {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--brand-primary) 55%, transparent),
+                0 0 34px color-mix(in srgb, var(--brand-secondary) 30%, transparent);
+  }
+  20%, 22%, 55% { box-shadow: 0 0 4px color-mix(in srgb, var(--brand-primary) 20%, transparent); }
 }
-@keyframes pop-neon {
-  0% { transform: scale(0.5); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes fade-up-neon {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+@keyframes text-flicker {
+  0%, 19%, 21%, 23%, 54%, 56%, 100% {
+    text-shadow: 0 0 12px var(--brand-primary), 0 0 22px color-mix(in srgb, var(--brand-primary) 50%, transparent);
+  }
+  20%, 22%, 55% { text-shadow: 0 0 3px color-mix(in srgb, var(--brand-primary) 30%, transparent); }
 }
 </style>

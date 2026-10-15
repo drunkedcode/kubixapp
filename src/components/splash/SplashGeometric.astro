@@ -1,27 +1,25 @@
 ---
-import type { Restaurant } from '@/types';
-interface Props { restaurant: Restaurant; }
-const { restaurant } = Astro.props;
-
-// Tomamos una imagen del heroSlider o la del splash para mostrar el producto/plato estrella
-const featuredImage = restaurant.heroSlider?.[0]?.image || restaurant.splash;
+import type { SplashData } from '@/types';
+interface Props { data: SplashData; }
+const { data } = Astro.props;
+const featuredImage = data.previewImages?.[0] || data.splash;
 ---
-<div class="splash-theme splash-geometric" style={`--splash-bg: url(${restaurant.splash});`}>
+<div class="splash-theme splash-geometric" style={`--splash-bg: url(${data.splash});`}>
   <div class="splash-overlay"></div>
+  <div class="geo-pattern"></div>
 
-  <!-- Elemento visual flotante del producto/plato estrella -->
   <div class="product-showcase">
-    <img src={featuredImage} alt="Featured dish" />
+    <img src={featuredImage} alt="" />
   </div>
 
   <div class="splash-content-box">
     <div class="logo-container">
-      <img src={restaurant.logo} alt={restaurant.name} />
+      <img src={data.logo} alt={data.name} />
     </div>
     <div class="text-group">
       <span class="welcome-badge">BEM-VINDO AO ESPAÇO</span>
-      <h1>{restaurant.name}</h1>
-      <p>{restaurant.tagline}</p>
+      <h1>{data.name}</h1>
+      <p>{data.tagline}</p>
     </div>
   </div>
 </div>
@@ -34,68 +32,59 @@ const featuredImage = restaurant.heroSlider?.[0]?.image || restaurant.splash;
 }
 .splash-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(15,23,42,0.96) 30%, rgba(15,23,42,0.85) 100%);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--splash-overlay) 96%, transparent) 30%,
+    color-mix(in srgb, var(--splash-overlay) 85%, transparent) 100%);
+}
+.geo-pattern {
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(45deg,
+    color-mix(in srgb, var(--brand-secondary) 8%, transparent) 0px,
+    color-mix(in srgb, var(--brand-secondary) 8%, transparent) 1px,
+    transparent 1px, transparent 36px);
+  animation: pattern-drift 16s linear infinite;
 }
 
-/* Plato estrella entrando desde la derecha */
 .product-showcase {
-  position: absolute;
-  top: 15%;
-  right: -20px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--brand-secondary, #FFD200);
+  position: absolute; top: 15%; right: -20px;
+  width: 180px; height: 180px; border-radius: 50%; overflow: hidden;
+  border: 4px solid var(--brand-secondary);
   box-shadow: 0 15px 35px rgba(0,0,0,0.6);
   opacity: 0;
-  animation: slide-in-right 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  animation: slide-in-right 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards,
+             float-bob 3.6s ease-in-out 1.1s infinite;
 }
 .product-showcase img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Contenido principal */
 .splash-content-box {
   position: relative; z-index: 2;
   display: flex; flex-direction: column; align-items: center; text-align: center;
   gap: 1.2rem; padding: 0 1.5rem; width: 100%; max-width: 400px;
 }
-
 .logo-container {
   width: 90px; height: 90px; border-radius: 50%;
-  background: white; border: 3px solid var(--brand-primary, #D62027);
+  background: white; border: 3px solid var(--brand-primary);
   box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
   opacity: 0;
   animation: drop-in-top 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
 }
 .logo-container img { width: 100%; height: 100%; object-fit: cover; }
 
-.text-group {
-  opacity: 0;
-  animation: fade-up-content 0.8s ease 0.4s forwards;
-}
+.text-group { opacity: 0; animation: fade-up-content 0.8s ease 0.4s forwards; }
 .welcome-badge {
   display: inline-block; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.18em;
-  color: var(--brand-secondary, #FFD200); background: rgba(255,210,0,0.12);
+  color: var(--brand-secondary);
+  background: color-mix(in srgb, var(--brand-secondary) 12%, transparent);
   padding: 0.3rem 0.8rem; border-radius: 20px; margin-bottom: 0.5rem;
-  border: 1px solid rgba(255,210,0,0.3);
+  border: 1px solid color-mix(in srgb, var(--brand-secondary) 30%, transparent);
 }
 .text-group h1 { font-size: 2.2rem; font-weight: 950; color: white; margin: 0 0 0.3rem; }
 .text-group p { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; margin: 0; letter-spacing: 0.05em; }
 
-/* Animaciones personalizadas */
-@keyframes slide-in-right {
-  0% { transform: translateX(80px) scale(0.8); opacity: 0; }
-  100% { transform: translateX(0) scale(1); opacity: 0.9; }
-}
-@keyframes drop-in-top {
-  0% { transform: translateY(-40px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-@keyframes fade-up-content {
-  0% { transform: translateY(25px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
+@keyframes slide-in-right { 0% { transform: translateX(80px) scale(0.8); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 0.9; } }
+@keyframes drop-in-top { 0% { transform: translateY(-40px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes fade-up-content { 0% { transform: translateY(25px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes float-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pattern-drift { from { background-position: 0 0; } to { background-position: 200px 200px; } }
 </style>

@@ -4,7 +4,7 @@ export const avibis: Restaurant = {
   slug: "avibis",
   name: "Avibi's",
   tagline: "Tempero e Sabor",
-  splashStyle: "minimal",
+  splashStyle: "neon",
   phone: "(41) 99146-6120",
   logo: "/images/restaurants/avibis/cheff.png",
   splash: "/images/restaurants/avibis/splash.jpg",

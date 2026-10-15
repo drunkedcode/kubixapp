@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: "auto", // <-- Esto inyecta automáticamente el registro del service worker
       devOptions: {
-        enabled: true, // <-- Esto activa el PWA en npm run dev
+        enabled: false, // <-- Esto activa el PWA en npm run dev
         navigateFallback: "/",
       },
       manifest: {
