@@ -1,55 +1,34 @@
 ---
 import type { Restaurant } from '../data/segments/restaurants/types';
+import BaseLayout from './BaseLayout.astro';
 import Navbar from './components/Navbar.astro';
-import FloatingActions from '../components/restaurants/FloatingActions.astro';
 import { getThemePath } from '../assets/styles/index';
-
-// OJO: usamos ?url en vez de un import normal. Un `import '...css'` lo
-// mete Astro al final del <head> automáticamente (después de cualquier
-// <link> que escribamos a mano), y por eso global.css siempre le ganaba
-// al theme en la cascada. Con ?url obtenemos la ruta y controlamos
-// nosotros mismos el orden con un <link> explícito.
-import globalStylesHref from '../assets/styles/global.css?url';
 
 interface Props {
   restaurant: Restaurant;
 }
 
 const { restaurant } = Astro.props;
-
-// Elegimos el tema automáticamente. Puede ser null si el negocio no
-// tiene theme propio todavía — en ese caso la página se queda con los
-// defaults de global.css, nunca con los colores de otro negocio.
 const themePath = getThemePath(restaurant.slug);
 ---
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{restaurant.name} — {restaurant.tagline}</title>
-    <meta name="description" content={`${restaurant.name} — ${restaurant.tagline}`} />
-    <link rel="icon" href={restaurant.logo} />
+<BaseLayout
+  title={`${restaurant.name} — ${restaurant.tagline}`}
+  description={`${restaurant.name} — ${restaurant.tagline}`}
+  favicon={restaurant.logo}
+>
+  {themePath && <link slot="head" rel="stylesheet" href={themePath} />}
 
-    <!-- Orden importante: global.css PRIMERO (defaults), theme DESPUÉS (pisa lo que le toca) -->
-    <link rel="stylesheet" href={globalStylesHref} />
-    {themePath && <link slot="head" rel="stylesheet" href={themePath} />}
-  </head>
-  <body>
-    <Navbar
-      name={restaurant.name}
-      tagline={restaurant.tagline}
-      logo={restaurant.logo}
-      isOpen={restaurant.isOpen}
-      todayHours={restaurant.todayHours}
-      schedule={restaurant.schedule}
-      homeUrl={`/restaurants/${restaurant.slug}`}
-    />
+  <Navbar
+    slot="header"
+    name={restaurant.name}
+    tagline={restaurant.tagline}
+    logo={restaurant.logo}
+    isOpen={restaurant.isOpen}
+    todayHours={restaurant.todayHours}
+    schedule={restaurant.schedule}
+    homeUrl={`/restaurants/${restaurant.slug}`}
+  />
 
-    <main>
-      <slot />
-    </main>
-
-  </body>
-</html>
+  <slot />
+</BaseLayout>

@@ -17,5 +17,8 @@
     "html5-qrcode": "^2.3.8",
     "i18next": "^26.4.4",
     "lucide-astro": "^0.556.0"
+  },
+  "devDependencies": {
+    "@vite-pwa/astro": "^1.2.0"
   }
 }

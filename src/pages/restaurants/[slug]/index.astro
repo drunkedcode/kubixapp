@@ -27,10 +27,11 @@ if (!restaurant) return Astro.redirect('/restaurants');
     <GalleryGrid items={restaurant.gallery} />
   </div>
 
-  <!-- Seguir, redes y cardápio (solo en el index) -->
+  <!-- Seguir, mapa, redes y cardápio (solo en el index) -->
   <FloatingActions
     slug={restaurant.slug}
     menuPath={restaurant.menuPath}
+    address={restaurant.address}
     social={restaurant.social}
   />
 </RestaurantLayout>

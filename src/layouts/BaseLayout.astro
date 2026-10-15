@@ -1,5 +1,5 @@
 ---
-import '../assets/styles/global.css';
+import globalStylesHref from '../assets/styles/global.css?url';
 
 interface Props {
   title: string;
@@ -27,7 +27,12 @@ const {
     <meta name="description" content={description} />
     <link rel="icon" href={favicon} />
 
-    <!-- Para que cada layout inyecte su tema u otros recursos -->
+    <!-- PWA: una sola vez para toda la plataforma -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#072439" />
+
+    <!-- global.css PRIMERO (defaults), el slot "head" de cada layout DESPUÉS (pisa lo que le toca) -->
+    <link rel="stylesheet" href={globalStylesHref} />
     <slot name="head" />
 
     <script>
@@ -41,6 +46,16 @@ const {
 
       document.addEventListener('DOMContentLoaded', initAOS);
       document.addEventListener('astro:after-swap', initAOS);
+    </script>
+
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => console.log('SW registrado:', reg.scope))
+            .catch((err) => console.error('Error registrando SW:', err));
+        });
+      }
     </script>
   </head>
   <body>

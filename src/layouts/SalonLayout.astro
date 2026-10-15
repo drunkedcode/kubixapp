@@ -1,5 +1,6 @@
 ---
 import type { Salon } from '../data/segments/salons';
+import BaseLayout from './BaseLayout.astro';
 import SalonNavbar from '../components/salons/SalonNavbar.astro';
 
 interface Props {
@@ -9,34 +10,23 @@ interface Props {
 const { salon } = Astro.props;
 ---
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{salon.name} — Espaço para Eventos</title>
-    <meta name="description" content={salon.description} />
-    <link rel="icon" href="/favicon.ico" />
-    <style is:global>
-      :root {
-        /* Paleta exclusiva para Salones */
-        --color-primary: #4A154B;   /* Púrpura elegante */
-        --color-secondary: #F0C808; /* Dorado */
-        --color-accent: #E8B427;
-        --color-dark: #1A1A1A;
-        --color-light: #FAFAFA;
-        --bg-page: #F8F5FC;
-      }
-      body {
-        background-color: var(--bg-page);
-      }
-    </style>
-  </head>
-  <body>
-    <SalonNavbar salon={salon} />
-    
-    <main>
-      <slot />
-    </main>
-  </body>
-</html>
+<BaseLayout
+  title={`${salon.name} — Espaço para Eventos`}
+  description={salon.description}
+>
+  <style slot="head" is:global>
+    :root {
+      --brand-primary: #4A154B;
+      --brand-primary-dark: #37103A;
+      --brand-primary-text: #FFFFFF;
+      --brand-secondary: #F0C808;
+      --brand-secondary-dark: #C9A700;
+      --brand-secondary-text: #1A1A1A;
+      --bg-page: #F8F5FC;
+    }
+  </style>
+
+  <SalonNavbar slot="header" salon={salon} />
+
+  <slot />
+</BaseLayout>

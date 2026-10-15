@@ -1,10 +1,11 @@
 ---
-import { Utensils, Share2, Instagram, Facebook } from 'lucide-astro';
+import { Utensils, Share2, Instagram, Facebook, MapPin } from 'lucide-astro';
 import FollowButton from '../shared/FollowButton.astro';
 
 interface Props {
   slug: string;
   menuPath?: string;
+  address?: string;
   social?: {
     facebook?: string;
     instagram?: string;
@@ -12,17 +13,36 @@ interface Props {
   };
 }
 
-const { slug, menuPath = '#cardapio', social = {} } = Astro.props;
+const { slug, menuPath = '#cardapio', address, social = {} } = Astro.props;
 const menuHref = menuPath.startsWith('#') ? menuPath : `/restaurants/${slug}${menuPath}`;
+
+// Preparamos el link de Google Maps si la propiedad address existe
+const mapsHref = address 
+  ? (address.startsWith('http') ? address : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`)
+  : undefined;
 
 const hasSocial = Boolean(social.instagram || social.facebook || social.tiktok);
 ---
 
 <div class="fab">
-  <!-- Arriba: seguir -->
+  <!-- 1. Arriba: Seguir -->
   <FollowButton itemKey={`restaurants/${slug}`} />
 
-  <!-- Medio: redes (se abren hacia la izquierda) -->
+  <!-- 2. Segundo: Google Maps (si el establecimiento tiene dirección) -->
+  {mapsHref && (
+    <a
+      href={mapsHref}
+      class="fab__sub"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Ver no Google Maps"
+      title="Ver no Google Maps"
+    >
+      <MapPin size={20} aria-hidden="true" />
+    </a>
+  )}
+
+  <!-- 3. Tercero: Redes sociales (desplegable) -->
   {hasSocial && (
     <div class="fab__social">
       <button
@@ -31,8 +51,8 @@ const hasSocial = Boolean(social.instagram || social.facebook || social.tiktok);
         id="fab-social-toggle"
         aria-expanded="false"
         aria-controls="fab-social-list"
-        aria-label="Redes sociales"
-        title="Redes sociales"
+        aria-label="Redes sociais"
+        title="Redes sociais"
       >
         <Share2 size={20} aria-hidden="true" />
       </button>
@@ -59,7 +79,7 @@ const hasSocial = Boolean(social.instagram || social.facebook || social.tiktok);
     </div>
   )}
 
-  <!-- Abajo: cardápio -->
+  <!-- 4. Abajo: Cardápio (Principal) -->
   <a href={menuHref} class="fab__main" aria-label="Ver Cardápio" title="Ver Cardápio">
     <Utensils size={26} strokeWidth={2.5} aria-hidden="true" />
   </a>
@@ -138,7 +158,11 @@ const hasSocial = Boolean(social.instagram || social.facebook || social.tiktok);
   color: var(--fab-sub-text);
   border: 1.5px solid var(--fab-sub-border);
   box-shadow: var(--fab-sub-shadow);
+  text-decoration: none;
   transition: transform 0.2s ease;
+}
+.fab__sub:hover {
+  transform: translateY(-2px);
 }
 .fab__sub:active {
   transform: scale(0.94);

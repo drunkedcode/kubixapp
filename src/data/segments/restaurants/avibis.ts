@@ -8,7 +8,7 @@ export const avibis: Restaurant = {
   phone: "(41) 99146-6120",
   logo: "/images/restaurants/avibis/cheff.png",
   splash: "/images/restaurants/avibis/splash.jpg",
-  address: "algun lugar de fazendinha",
+  address: "Rua Arnoldo, 1051 - Fazendinha, Curitiba - PR",
   isOpen: true,
   todayHours: "18:00 - 23:00",
   schedule: [
