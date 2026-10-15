@@ -1,0 +1,186 @@
+---
+interface Item {
+  id: string;
+  name: string;
+  shortName?: string;
+  price: number;
+  promoPrice?: number;
+  badge?: string;
+  image: string;
+}
+
+interface Props {
+  items: Item[];
+  title?: string;
+  note?: string;
+  moreHref?: string; // si existe, se muestra "Ver todos"
+  allItems?: Item[]; // ítems completos para el lightbox (si difieren de items)
+}
+
+const { items, title, note, moreHref, allItems } = Astro.props;
+const full = allItems ?? items;
+
+const money = (n: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    .format(n)
+    .replace(/\u00a0/g, ' ');
+---
+
+<section class="cgrid">
+  {(title || moreHref) && (
+    <div class="cgrid__head">
+      {title && <h2 class="cgrid__title">{title}</h2>}
+      {moreHref && <a href={moreHref} class="cgrid__more">Ver todos ›</a>}
+    </div>
+  )}
+  {note && <p class="cgrid__note">{note}</p>}
+
+  <div class="cgrid__list">
+    {items.map((item) => {
+      const data = full.find((f) => f.id === item.id) ?? item;
+      return (
+        <button
+          type="button"
+          class="cg-card"
+          data-item={JSON.stringify(data)}
+          aria-label={`Ver detalhes de ${item.name}`}
+        >
+          <span class="cg-card__media">
+            <img src={item.image} alt="" class="cg-card__img" loading="lazy" draggable="false" />
+            {item.badge && <span class="cg-card__badge">{item.badge}</span>}
+          </span>
+          <span class="cg-card__name">{item.shortName ?? item.name}</span>
+          <span class="cg-card__prices">
+            <span class="cg-card__price">{money(item.promoPrice ?? item.price)}</span>
+            {item.promoPrice && <span class="cg-card__old">{money(item.price)}</span>}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.cgrid').forEach((root) => {
+    root.querySelectorAll('.cg-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        try {
+          const item = JSON.parse(card.dataset.item || '{}');
+          window.dispatchEvent(new CustomEvent('menu:open', { detail: item }));
+        } catch (err) {
+          /* item inválido */
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+.cgrid {
+  padding: 0.5rem 1rem 1rem;
+}
+
+.cgrid__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+.cgrid__title {
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+.cgrid__more {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  white-space: nowrap;
+}
+.cgrid__note {
+  margin-bottom: 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.cgrid__list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.cg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cg-card:active {
+  transform: scale(0.97);
+}
+
+.cg-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--bg-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.cg-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cg-card__badge {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.3rem;
+  max-width: calc(100% - 0.6rem);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  background: var(--brand-primary);
+  color: var(--brand-primary-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-card__name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-dark);
+}
+.cg-card__prices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+.cg-card__price {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+}
+.cg-card__old {
+  font-size: 0.65rem;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+</style>

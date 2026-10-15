@@ -1,0 +1,264 @@
+---
+interface Props {
+  companyKey: string;
+}
+const { companyKey } = Astro.props;
+---
+
+<div class="lb" data-company={companyKey} hidden role="dialog" aria-modal="true" aria-label="Detalhe do item">
+  <div class="lb__panel">
+    <button type="button" class="lb__close" aria-label="Fechar">✕</button>
+    <div class="lb__media">
+      <img class="lb__img" src="" alt="" />
+      <span class="lb__badge" hidden></span>
+    </div>
+    <div class="lb__body">
+      <h3 class="lb__title"></h3>
+      <p class="lb__variant" hidden></p>
+      <p class="lb__serves" hidden></p>
+      <p class="lb__desc"></p>
+      <div class="lb__includes" hidden>
+        <span class="lb__label">Inclui</span>
+        <ul class="lb__list"></ul>
+      </div>
+      <div class="lb__footer">
+        <div>
+          <span class="lb__label">Preço</span>
+          <div class="lb__prices">
+            <span class="lb__price"></span>
+            <span class="lb__old" hidden></span>
+          </div>
+        </div>
+        <button type="button" class="btn btn--primary lb__add">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { addLine, money } from '@/store/cartStore';
+
+  const lb = document.querySelector('.lb');
+  if (lb) {
+    const img = lb.querySelector('.lb__img');
+    const badge = lb.querySelector('.lb__badge');
+    const title = lb.querySelector('.lb__title');
+    const variantLabel = lb.querySelector('.lb__variant');
+    const serves = lb.querySelector('.lb__serves');
+    const desc = lb.querySelector('.lb__desc');
+    const includes = lb.querySelector('.lb__includes');
+    const list = lb.querySelector('.lb__list');
+    const priceEl = lb.querySelector('.lb__price');
+    const oldPriceEl = lb.querySelector('.lb__old');
+
+    let currentItem = null;
+    let effectiveData = { id: '', name: '', price: 0 };
+
+    const open = (item) => {
+      currentItem = item;
+      const variant = item.selectedVariant;
+      const effectivePrice = variant ? variant.price : (item.promoPrice || item.price);
+      const effectiveName = variant ? `${item.name} — ${variant.label}` : item.name;
+      const effectiveId = variant
+        ? `${item.id}-${variant.id}`
+        : item.id || item.name;
+
+      effectiveData = { id: effectiveId, name: effectiveName, price: effectivePrice };
+
+      img.src = item.image || '';
+      img.alt = effectiveName;
+      title.textContent = item.name;
+
+      if (variant) {
+        variantLabel.textContent = variant.label;
+        variantLabel.hidden = false;
+      } else {
+        variantLabel.hidden = true;
+      }
+
+      serves.textContent = item.serves ? `Para ${item.serves}` : '';
+      serves.hidden = !item.serves;
+
+      desc.textContent = item.largeDescription || item.shortDescription || '';
+      desc.hidden = !desc.textContent;
+
+      priceEl.textContent = money(effectivePrice);
+      if (!variant && item.promoPrice) {
+        oldPriceEl.textContent = money(item.price);
+        oldPriceEl.hidden = false;
+      } else {
+        oldPriceEl.hidden = true;
+      }
+
+      badge.textContent = item.badge || '';
+      badge.hidden = !item.badge;
+
+      list.innerHTML = '';
+      (item.includes || []).forEach((inc) => {
+        const li = document.createElement('li');
+        li.textContent = inc;
+        list.appendChild(li);
+      });
+      includes.hidden = !(item.includes && item.includes.length);
+
+      lb.hidden = false;
+      document.body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+      lb.hidden = true;
+      document.body.style.overflow = '';
+      currentItem = null;
+    };
+
+    window.addEventListener('menu:open', (e) => open(e.detail));
+
+    lb.querySelector('.lb__add').addEventListener('click', () => {
+      if (!currentItem) return;
+      addLine(lb.dataset.company, {
+        id: effectiveData.id,
+        name: effectiveData.name,
+        price: effectiveData.price,
+      });
+      close();
+    });
+
+    lb.querySelector('.lb__close').addEventListener('click', close);
+    lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lb.hidden) close(); });
+  }
+</script>
+
+<style>
+.lb {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+.lb[hidden] { display: none; }
+.lb__panel {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.lb__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.lb__media { position: relative; }
+.lb__img {
+  width: 100%;
+  height: 14rem;
+  object-fit: cover;
+  display: block;
+}
+.lb__badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: var(--brand-primary);
+  color: var(--brand-primary-text);
+}
+.lb__badge[hidden] { display: none; }
+.lb__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+.lb__title { font-size: 1.15rem; color: var(--text-dark); margin: 0; }
+.lb__variant {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  margin: -0.25rem 0;
+}
+.lb__variant[hidden] { display: none; }
+.lb__serves {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  margin: 0;
+}
+.lb__serves[hidden], .lb__desc[hidden] { display: none; }
+.lb__desc { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+.lb__includes {
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0.25rem;
+}
+.lb__includes[hidden] { display: none; }
+.lb__label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+.lb__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-dark);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lb__list li::before {
+  content: '✓ ';
+  font-weight: 800;
+  color: var(--color-success, #10b981);
+}
+.lb__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0.25rem;
+}
+.lb__prices { display: flex; align-items: baseline; gap: 0.5rem; }
+.lb__price { font-size: 1.15rem; font-weight: 900; color: var(--brand-primary); }
+.lb__old { font-size: 0.75rem; color: var(--text-light); text-decoration: line-through; }
+.lb__old[hidden] { display: none; }
+.lb__add {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--brand-primary);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+</style>

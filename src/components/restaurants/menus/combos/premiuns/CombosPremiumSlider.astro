@@ -1,0 +1,249 @@
+---
+import type { CombosPremiumSection } from '../../../../../types';
+
+interface Props {
+  data: CombosPremiumSection;
+}
+
+const { data } = Astro.props;
+const { items = [] } = data;
+---
+
+<div class="combos">
+  <div class="slider-wrapper">
+    <div class="slider-container">
+      <div class="slider-track">
+        {items.map((item, index) => (
+          <button
+            type="button"
+            class="slide-card"
+            data-item={JSON.stringify(item)}
+            aria-label={`Ver detalhes de ${item.name}`}
+          >
+            <img
+              src={item.image}
+              alt={item.name}
+              class="slide-card__image"
+              loading={index === 0 ? 'eager' : 'lazy'}
+              draggable="false"
+            />
+            {item.badge && <span class="slide-card__badge">{item.badge}</span>}
+            <span class="slide-card__caption">{item.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="slider-dots">
+      {items.map((_, index) => (
+        <button
+          type="button"
+          class={`dot ${index === 0 ? 'active' : ''}`}
+          aria-label={`Cartão ${index + 1}`}
+        ></button>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  function initCombos(root) {
+    const container = root.querySelector('.slider-container');
+    const cards = Array.from(root.querySelectorAll('.slide-card'));
+    const dots = Array.from(root.querySelectorAll('.slider-dots .dot'));
+
+    if (!container || cards.length === 0) return;
+
+    const getTarget = (i) => {
+      const cRect = container.getBoundingClientRect();
+      const cardRect = cards[i].getBoundingClientRect();
+      const padLeft = parseFloat(getComputedStyle(container).paddingLeft) || 0;
+      return cardRect.left - cRect.left + container.scrollLeft - padLeft;
+    };
+
+    const getNearest = () => {
+      const max = container.scrollWidth - container.clientWidth;
+      if (max > 0 && container.scrollLeft >= max - 2) return cards.length - 1;
+      let nearest = 0;
+      let min = Infinity;
+      cards.forEach((_, i) => {
+        const d = Math.abs(getTarget(i) - container.scrollLeft);
+        if (d < min) { min = d; nearest = i; }
+      });
+      return nearest;
+    };
+
+    const updateDots = () => {
+      const current = getNearest();
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+    };
+
+    let ticking = false;
+    container.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { updateDots(); ticking = false; });
+    }, { passive: true });
+
+    dots.forEach((dot, i) =>
+      dot.addEventListener('click', () =>
+        container.scrollTo({ left: getTarget(i), behavior: 'smooth' })
+      )
+    );
+
+    // Arrastre con mouse (en táctil el swipe es nativo)
+    let isDown = false;
+    let moved = false;
+    let startX = 0;
+    let startScroll = 0;
+
+    container.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      isDown = true;
+      moved = false;
+      startX = e.clientX;
+      startScroll = container.scrollLeft;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDown) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) > 4) {
+        moved = true;
+        container.style.scrollSnapType = 'none';
+        container.style.scrollBehavior = 'auto';
+        container.style.cursor = 'grabbing';
+      }
+      if (moved) container.scrollLeft = startScroll - dx;
+    });
+
+    const endDrag = () => {
+      if (!isDown) return;
+      isDown = false;
+      if (!moved) return;
+      const target = getTarget(getNearest());
+      container.style.scrollSnapType = '';
+      container.style.scrollBehavior = '';
+      container.style.cursor = '';
+      container.scrollTo({ left: target, behavior: 'smooth' });
+    };
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    // Un arrastre no debe abrir el lightbox
+    container.addEventListener('click', (e) => {
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        moved = false;
+      }
+    }, true);
+
+    // Tocar una tarjeta avisa al lightbox compartido
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        try {
+          const item = JSON.parse(card.dataset.item || '{}');
+          window.dispatchEvent(new CustomEvent('menu:open', { detail: item }));
+        } catch (err) {
+          /* item inválido */
+        }
+      });
+    });
+
+    window.addEventListener('resize', updateDots);
+    updateDots();
+  }
+
+  document.querySelectorAll('.combos').forEach(initCombos);
+</script>
+
+<style>
+.slider-wrapper {
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+}
+.slider-container {
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 1rem;
+  padding: 0.5rem 1rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+}
+.slider-container::-webkit-scrollbar { display: none; }
+.slider-track { display: flex; gap: 1rem; }
+
+.slide-card {
+  position: relative;
+  flex: 0 0 78%;
+  max-width: 280px;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  scroll-snap-align: start;
+  border: none;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font: inherit;
+}
+.slide-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.slide-card__badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  background: var(--brand-primary);
+  color: var(--brand-primary-text);
+}
+.slide-card__caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.5rem 0.75rem 0.6rem;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+}
+
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.dot.active {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--brand-primary);
+}
+
+@media (min-width: 640px) {
+  .slide-card { flex: 0 0 280px; }
+}
+</style>

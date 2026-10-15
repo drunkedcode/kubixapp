@@ -116,6 +116,21 @@
   --fab-sub-text: var(--brand-primary);
   --fab-sub-border: var(--brand-primary);
   --fab-sub-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+
+    /* === CART (CartDock.astro) === */
+  --cart-fab-bg: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  --cart-fab-text: var(--brand-primary-text);
+  --cart-fab-shadow: 0 6px 20px color-mix(in srgb, var(--brand-primary) 45%, transparent);
+  --cart-badge-bg: var(--brand-secondary);
+  --cart-badge-text: var(--brand-secondary-text);
+  --cart-overlay: rgba(0, 0, 0, 0.5);
+  --cart-sheet-bg: var(--bg-card);
+  --cart-sheet-text: var(--text-dark);
+  --cart-sheet-muted: var(--text-muted);
+  --cart-sheet-border: var(--border-light);
+  --cart-row-bg: var(--bg-page);
+  --cart-send-bg: #25D366; /* verde de WhatsApp: es de su marca, no de la empresa */
+  --cart-send-text: #FFFFFF;
 }
 
 /* ── 2. Reseteo ── */

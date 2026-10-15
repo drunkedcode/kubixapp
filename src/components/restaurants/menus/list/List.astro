@@ -1,0 +1,211 @@
+---
+import { Plus } from 'lucide-astro';
+import type { MenuListSection } from '../../../../data/segments/restaurants/types';
+
+interface Props {
+  data: MenuListSection;
+}
+
+const { data } = Astro.props;
+const { title = 'Cardápio', note, categories } = data;
+
+function formatPrice(value: number): string {
+  return `R$ ${value.toFixed(2).replace('.', ',')}`;
+}
+---
+
+<section class="list-menu container">
+  <h2 class="list-menu__title">{title}</h2>
+  {note && <p class="list-menu__note">{note}</p>}
+
+  {categories.map((cat) => (
+    <div class="list-category">
+      <h3 class="list-category__name">{cat.name}</h3>
+      {cat.note && <p class="list-category__note">{cat.note}</p>}
+
+      <ul class="list-items">
+        {cat.items.map((item) => (
+          <li class="list-item" data-list-item={JSON.stringify(item)}>
+            {item.variants?.length ? (
+              <div class="list-variant-group">
+                <span class="list-variant-group__name">{item.name}</span>
+                <ul class="list-variants">
+                  {item.variants.map((v) => (
+                    <li class="list-row list-row--variant" data-variant={JSON.stringify(v)}>
+                      <span class="list-row__name">{v.label}</span>
+                      <span class="list-row__dots" aria-hidden="true"></span>
+                      <span class="list-row__price">{formatPrice(v.price)}</span>
+                      <button
+                        type="button"
+                        class="list-add-btn"
+                        aria-label={`Agregar ${item.name} — ${v.label} al carrito`}
+                      >
+                        <Plus size={12} strokeWidth={2.5} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div class="list-row">
+                <span class="list-row__name">{item.name}</span>
+                <span class="list-row__dots" aria-hidden="true"></span>
+                <span class="list-row__price">
+                  {item.price !== undefined ? formatPrice(item.price) : ''}
+                </span>
+                <button
+                  type="button"
+                  class="list-add-btn"
+                  aria-label={`Agregar ${item.name} al carrito`}
+                >
+                  <Plus size={12} strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+            {item.description && <p class="list-item__desc">{item.description}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</section>
+
+<script>
+document.querySelectorAll<HTMLElement>('.list-item').forEach((itemEl) => {
+  const itemRaw = itemEl.dataset.listItem;
+  if (!itemRaw) return;
+
+  itemEl.querySelectorAll<HTMLButtonElement>('.list-add-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      try {
+        const item = JSON.parse(itemRaw);
+        const variantEl = btn.closest('[data-variant]') as HTMLElement | null;
+        const variantRaw = variantEl?.dataset.variant;
+
+        const payload = variantRaw
+          ? { ...item, selectedVariant: JSON.parse(variantRaw) }
+          : item;
+
+        window.dispatchEvent(new CustomEvent('menu:open', { detail: payload }));
+      } catch {}
+    });
+  });
+});
+</script>
+
+<style>
+.list-menu {
+  padding: 0.5rem 0 1.5rem;
+}
+.list-menu__title {
+  font-size: 1.2rem;
+  color: var(--color-black);
+  margin-bottom: 0.25rem;
+}
+.list-menu__note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.list-category {
+  margin-bottom: 1.5rem;
+}
+.list-category__name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-black);
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--brand-primary);
+  margin-bottom: 0.3rem;
+}
+.list-category__note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.list-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.list-item {
+  border-bottom: 1px dashed var(--border-light);
+  padding: 0.25rem 0;
+}
+.list-item:last-child {
+  border-bottom: none;
+}
+.list-item__desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 0.4rem;
+}
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+}
+.list-row__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  white-space: nowrap;
+}
+.list-row__dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--border-light);
+  transform: translateY(-2px);
+}
+.list-row__price {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+  white-space: nowrap;
+}
+.list-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.list-add-btn:hover {
+  transform: scale(1.15);
+  background: var(--brand-primary-dark, #b91c22);
+}
+.list-add-btn:active {
+  transform: scale(0.9);
+}
+.list-variant-group {
+  padding: 0.3rem 0 0.1rem;
+}
+.list-variant-group__name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.2rem;
+}
+.list-variants {
+  list-style: none;
+  padding: 0 0 0 0.75rem;
+  margin: 0;
+}
+.list-row--variant {
+  padding: 0.25rem 0;
+}
+.list-row--variant .list-row__name {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+</style>

@@ -1,0 +1,373 @@
+---
+import MainLayout from '@/layouts/MainLayout.astro';
+import HeroSlider from '@/components/shared/HeroSlider.astro';
+import CircleSlider from '@/components/shared/CircleSlider.astro';
+import MiniCard from '@/components/shared/MiniCard.astro';
+import { catalog, segments } from '../data/catalog';
+import { Search, History, Building2, ChevronRight, ChevronDown } from 'lucide-astro';
+import { useTranslations } from '../i18n';
+
+// Instancia de traducción centralizada basada en la URL / entorno
+const t = useTranslations(Astro.cookies, Astro.url);
+
+const keys = catalog.map(({ segment, slug }) => ({ segment, slug }));
+
+// Mock: cuando exista backend, esta línea se reemplaza por una llamada a api.ts
+const recommended = catalog.slice(0, 6).map((c) => ({
+  id: c.key,
+  image: c.logo,
+  title: c.name,
+  subtitle: c.tagline,
+  href: c.href,
+}));
+---
+
+<MainLayout>
+  <div class="home">
+
+    <!-- 1. Seguidos (círculos). Se muestra solo si hay seguidos -->
+    <section class="block" data-circles hidden>
+      <CircleSlider
+        items={catalog.map((c) => ({ key: c.key, href: c.href, name: c.name, logo: c.logo }))}
+      />
+    </section>
+
+    <!-- 2. Buscador -->
+    <section class="container hero" data-aos="fade-down">
+      <h1 class="hero__title">{t('index.hero.title')} <span>KubixApp</span></h1>
+      <p class="hero__subtitle">{t('index.hero.subtitle')}</p>
+
+      <form
+        id="company-search"
+        class="search"
+        data-keys={JSON.stringify(keys)}
+        data-default-segment={segments[0]?.id ?? ''}
+        novalidate
+      >
+        {segments.length > 1 && (
+          <label class="search__select">
+            <select id="segment-select" aria-label="Tipo de negocio">
+              {segments.map((s) => <option value={s.id}>{s.label}</option>)}
+            </select>
+            <ChevronDown size={16} class="search__chevron" aria-hidden="true" />
+          </label>
+        )}
+
+        <label class="search__field">
+          <Search size={20} class="search__icon" aria-hidden="true" />
+          <input
+            id="company-input"
+            type="text"
+            placeholder={t('index.hero.searchPlaceholder')}
+            autocomplete="off"
+            autocapitalize="none"
+            aria-label={t('index.hero.searchPlaceholder')}
+          />
+        </label>
+
+        <button type="submit" class="btn btn--primary search__btn">{t('common.buttons.visit')}</button>
+      </form>
+      <p id="search-error" class="search__error" role="alert" hidden></p>
+    </section>
+
+    <!-- 3. Visitados recientes (grid de 3 columnas, máx. 6) -->
+    <section class="container block" data-aos="fade-up">
+      <div class="block__row">
+        <div class="block__head">
+          <Building2 size={20} class="block__icon" aria-hidden="true" />
+          <h2 class="block__title">{t('index.places.title')}</h2>
+        </div>
+        <a href="/alls" id="see-all" class="see-all" hidden>
+          {t('common.buttons.seeAll')} <ChevronRight size={16} aria-hidden="true" />
+        </a>
+      </div>
+
+      <div id="places-empty" class="empty">
+        <Building2 size={36} class="empty__icon" aria-hidden="true" />
+        <p>{t('index.places.emptyTitle')}</p>
+        <span>{t('index.places.emptySubtitle')}</span>
+      </div>
+
+      <div id="places-grid" class="mini-grid" hidden>
+        {catalog.map((c) => (
+          <MiniCard itemKey={c.key} href={c.href} name={c.name} logo={c.logo} isOpen={c.isOpen} />
+        ))}
+      </div>
+    </section>
+
+    <!-- 4. Recomendados -->
+    {recommended.length > 0 && (
+      <section class="block" data-aos="fade-up">
+        <div class="container block__row">
+          <div>
+            <h3 class="block__title">{t('index.recommended.title')}</h3>
+            <p class="block__desc">{t('index.recommended.desc')}</p>
+          </div>
+          <a href="/alls" class="see-all">
+            {t('common.buttons.seeAll')} <ChevronRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+        <HeroSlider slides={recommended} />
+      </section>
+    )}
+
+  </div>
+</MainLayout>
+
+<script>
+  import { getFollowing, getVisited } from '../lib/history';
+  import { resolveFromForm, type CompanyKey } from '../lib/resolver';
+
+  // ---------- Buscador ----------
+  const form = document.getElementById('company-search') as HTMLFormElement | null;
+  const input = document.getElementById('company-input') as HTMLInputElement | null;
+  const select = document.getElementById('segment-select') as HTMLSelectElement | null;
+  const errorEl = document.getElementById('search-error');
+
+  if (form && input && errorEl) {
+    const companies: CompanyKey[] = JSON.parse(form.dataset.keys || '[]');
+
+    input.addEventListener('input', () => { errorEl.hidden = true; });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const segment = select?.value ?? form.dataset.defaultSegment ?? '';
+      const url = resolveFromForm(segment, input.value, companies);
+
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+      errorEl.textContent = input.value.trim()
+        ? 'No encontramos esa empresa. Revisa el nombre.'
+        : 'Escribe el nombre de una empresa.';
+      errorEl.hidden = false;
+    });
+  }
+
+  // ---------- Seguidos y visitados ----------
+  function reveal(root: ParentNode, keys: string[]): number {
+    const byKey = new Map(
+      Array.from(root.querySelectorAll<HTMLElement>('[data-key]')).map((el) => [el.dataset.key!, el])
+    );
+    byKey.forEach((el) => { el.hidden = true; });
+
+    let shown = 0;
+    keys.forEach((k) => {
+      const el = byKey.get(k);
+      if (!el) return;
+      el.hidden = false;
+      el.parentElement!.appendChild(el);
+      shown++;
+    });
+    return shown;
+  }
+
+  const following = getFollowing();
+  const recent = getVisited().filter((k) => !following.includes(k)).slice(0, 6);
+
+  const circles = document.querySelector<HTMLElement>('[data-circles]');
+  const grid = document.getElementById('places-grid');
+  const empty = document.getElementById('places-empty');
+  const seeAll = document.getElementById('see-all');
+
+  const nFollowing = circles ? reveal(circles, following) : 0;
+  const nRecent = grid ? reveal(grid, recent) : 0;
+
+  if (circles) circles.hidden = nFollowing === 0;
+  if (grid) grid.hidden = nRecent === 0;
+  if (empty) empty.hidden = nFollowing + nRecent > 0;
+  if (seeAll) seeAll.hidden = nFollowing + nRecent === 0;
+</script>
+
+<style>
+.home {
+  padding: 1rem 0;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 1.25rem 0 1rem;
+}
+.hero__title {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--color-black);
+}
+.hero__title span {
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero__subtitle {
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Buscador */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.search:focus-within {
+  border-color: var(--brand-primary);
+}
+
+.search__select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 0.4rem;
+  border-right: 1px solid var(--border-light);
+}
+.search__select select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.5rem 1.4rem 0.5rem 0.6rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+.search__chevron {
+  position: absolute;
+  right: 0.35rem;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+.search__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  padding-left: 0.5rem;
+}
+.search__icon {
+  flex-shrink: 0;
+  color: var(--text-light);
+}
+.search__field input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+.search__field input::placeholder {
+  color: var(--text-light);
+}
+.search__btn {
+  width: auto;
+  flex-shrink: 0;
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
+}
+.search__error {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-danger-text);
+}
+
+/* Bloques */
+.block {
+  padding-top: 1.5rem;
+}
+.block[hidden] {
+  display: none;
+}
+.block__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.block__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.block__icon {
+  color: var(--brand-primary);
+}
+.block__title {
+  font-size: 1rem;
+  color: var(--color-black);
+}
+.block__desc {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  white-space: nowrap;
+}
+.see-all[hidden] {
+  display: none;
+}
+
+/* Estado vacío */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-light);
+  border-radius: 1.25rem;
+}
+.empty[hidden] {
+  display: none;
+}
+.empty__icon {
+  color: var(--text-light);
+}
+.empty p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.empty span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Grid de mini cards */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.mini-grid[hidden] {
+  display: none;
+}
+</style>

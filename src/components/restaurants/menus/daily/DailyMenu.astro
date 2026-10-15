@@ -1,0 +1,234 @@
+---
+import type { MenuDelDia } from '../../data/segments/restaurants/types';
+import { Utensils, Plus, CalendarDays } from 'lucide-astro';
+
+interface Props {
+  data: MenuDelDia;
+}
+
+const { data } = Astro.props;
+const today = new Date().getDay(); // 0=Dom, 1=Lun... 6=Sáb
+const todayMenu = data.days?.find(d => d.day === today);
+const hasContent = Boolean(data.days?.length);
+
+if (!hasContent) return null;
+---
+
+<section class="daily-menu">
+  <h2 class="daily-menu__title">
+    <Utensils size="1.25rem" stroke-width="2" />
+    {data.title}
+  </h2>
+
+  {todayMenu ? (
+    <div class="daily-menu__today">
+      <h3 class="daily-menu__subtitle">{todayMenu.title}</h3>
+      <ul class="daily-menu__list">
+        {todayMenu.items.map((item) => (
+          <li class="daily-menu__item" data-list-item={JSON.stringify(item)}>
+            <div class="daily-menu__row">
+              {item.image && (
+                <img
+                  class="daily-menu__img"
+                  src={item.image}
+                  alt={item.name}
+                  loading="lazy"
+                />
+              )}
+              <div class="daily-menu__info">
+                <span class="daily-menu__name">{item.name}</span>
+                {item.description && (
+                  <p class="daily-menu__desc">{item.description}</p>
+                )}
+                <span class="daily-menu__price">
+                  R$ {item.price.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="daily-menu__add"
+                aria-label={`Agregar ${item.name} al pedido`}
+              >
+                <Plus size="1rem" stroke-width="2.5" />
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : (
+    <p class="daily-menu__empty">Hoy no hay menú especial programado.</p>
+  )}
+
+  {data.days.length > 1 && (
+    <details class="daily-menu__preview">
+      <summary class="daily-menu__summary">
+        <CalendarDays size="0.95rem" stroke-width="2" />
+        Ver menús de los próximos días
+      </summary>
+      <ul class="daily-menu__upcoming">
+        {data.days
+          .filter(d => d.day !== today)
+          .sort((a, b) => a.day - b.day)
+          .map(d => {
+            const dayNames = [
+              'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
+            ];
+            return (
+              <li class="daily-menu__upcoming-day">
+                <strong>{dayNames[d.day]}:</strong> {d.title}
+              </li>
+            );
+          })}
+      </ul>
+    </details>
+  )}
+</section>
+
+<script>
+document.querySelectorAll<HTMLElement>('.daily-menu__item').forEach((el) => {
+  const btn = el.querySelector<HTMLButtonElement>('.daily-menu__add');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    try {
+      const raw = el.dataset.listItem;
+      if (!raw) return;
+      const item = JSON.parse(raw);
+      window.dispatchEvent(new CustomEvent('menu:open', { detail: item }));
+    } catch {}
+  });
+});
+</script>
+
+<style>
+.daily-menu {
+  padding: 1.25rem 1rem 1.75rem; /* ← padding lateral + vertical */
+  border-top: 2px solid var(--border-light);
+}
+
+.daily-menu__title {
+  font-size: 1.1rem;
+  color: var(--color-black);
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.daily-menu__subtitle {
+  font-size: 1rem;
+  color: var(--brand-primary);
+  margin: 0 0 0.75rem;
+}
+
+.daily-menu__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.daily-menu__item {
+  background: var(--bg-card, #fff);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.daily-menu__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.daily-menu__img {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.daily-menu__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.daily-menu__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.daily-menu__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.daily-menu__price {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--brand-primary);
+}
+
+.daily-menu__add {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+
+.daily-menu__add:hover {
+  transform: scale(1.1);
+}
+
+.daily-menu__empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.daily-menu__preview {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.daily-menu__summary {
+  list-style: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.daily-menu__summary::-webkit-details-marker {
+  display: none;
+}
+
+.daily-menu__upcoming {
+  margin: 0.5rem 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.daily-menu__upcoming-day {
+  padding: 0.25rem 0;
+}
+</style>

@@ -1,0 +1,55 @@
+---
+import RestaurantLayout from '../../../layouts/RestaurantLayout.astro';
+import { allRestaurants } from '../../../data/segments/restaurants';
+import CartDock from '@/components/shared/CartDock.astro';
+import MenuLightbox from '@/components/restaurants/menus/MenuLightbox.astro';
+import CombosGrid from '../../../components/restaurants/menus/combos/grids/CombosGrid.astro';
+
+// Solo se generan páginas para restaurantes que tienen combos simples
+export async function getStaticPaths() {
+  return allRestaurants
+    .filter((r) => r && r.slug && r.menuData?.combosSimples?.items?.length)
+    .map((restaurant) => ({
+      params: { slug: restaurant.slug }
+    }));
+}
+
+const { slug } = Astro.params;
+const restaurant = allRestaurants.find((r) => r && r.slug === slug);
+
+if (!restaurant) return Astro.redirect('/restaurants');
+
+const simples = restaurant.menuData!.combosSimples!;
+const companyKey = `restaurants/${restaurant.slug}`;
+---
+
+<RestaurantLayout restaurant={restaurant}>
+  <div class="all-page">
+    <a href={`/restaurants/${slug}/menu`} class="back-link">← Voltar ao cardápio</a>
+
+    <CombosGrid
+      title={simples.title ?? 'Combos'}
+      note={simples.note}
+      items={simples.items}
+    />
+  </div>
+
+  <MenuLightbox companyKey={companyKey} />
+  <CartDock companyKey={companyKey} phone={restaurant.whatsapp ?? restaurant.phone} name={restaurant.name} />
+</RestaurantLayout>
+
+<style>
+.all-page {
+  padding: 0.75rem 0 5.5rem;
+}
+.back-link {
+  display: inline-block;
+  margin: 0 1rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+.back-link:hover {
+  text-decoration: underline;
+}
+</style>

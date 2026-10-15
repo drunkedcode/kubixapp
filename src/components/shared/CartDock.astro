@@ -1,0 +1,348 @@
+---
+import { ShoppingCart, X, MessageCircle } from 'lucide-astro';
+
+interface Props {
+  companyKey: string; // "restaurants/avibis"
+  phone: string;
+  name: string;
+}
+
+const { companyKey, phone, name } = Astro.props;
+---
+
+<div class="cart" data-cart={companyKey} data-phone={phone} data-name={name}>
+  <button
+    type="button"
+    class="cart__fab"
+    aria-label="Ver meu pedido"
+    title="Ver meu pedido"
+    aria-expanded="false"
+  >
+    <ShoppingCart size={26} aria-hidden="true" />
+    <span class="cart__badge" hidden>0</span>
+  </button>
+
+  <div class="cart__overlay" hidden></div>
+
+  <section class="cart__sheet" hidden role="dialog" aria-modal="true" aria-label="Seu pedido">
+    <header class="cart__head">
+      <div>
+        <h3 class="cart__title">Seu pedido</h3>
+        <span class="cart__code"></span>
+      </div>
+      <button type="button" class="cart__close" aria-label="Fechar">
+        <X size={20} aria-hidden="true" />
+      </button>
+    </header>
+
+    <p class="cart__empty">Seu pedido está vazio. Escolha algo no cardápio.</p>
+    <ul class="cart__list"></ul>
+
+    <footer class="cart__foot" hidden>
+      <div class="cart__total">
+        <span>Total</span>
+        <strong class="cart__total-value"></strong>
+      </div>
+      <p class="cart__warn" hidden>Este negócio ainda não tem WhatsApp cadastrado.</p>
+      <a class="cart__send" target="_blank" rel="noopener noreferrer">
+        <MessageCircle size={20} aria-hidden="true" />
+        Enviar pedido por WhatsApp
+      </a>
+      <button type="button" class="cart__clear">Esvaziar pedido</button>
+    </footer>
+  </section>
+</div>
+
+<script>
+  import {
+    onCartChange, changeQty, clearCart,
+    cartCount, cartTotal, orderMessage, whatsappUrl, money,
+    type Cart, type CartLine,
+  } from '../../store/cartStore.ts';
+
+  const el = (tag: string, cls: string, text?: string) => {
+    const node = document.createElement(tag);
+    node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-cart]').forEach((root) => {
+    const key = root.dataset.cart!;
+    const phone = root.dataset.phone ?? '';
+    const name = root.dataset.name ?? '';
+
+    const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const fab = q<HTMLButtonElement>('.cart__fab');
+    const badge = q('.cart__badge');
+    const overlay = q('.cart__overlay');
+    const sheet = q('.cart__sheet');
+    const codeEl = q('.cart__code');
+    const emptyEl = q('.cart__empty');
+    const list = q('.cart__list');
+    const foot = q('.cart__foot');
+    const totalEl = q('.cart__total-value');
+    const warn = q('.cart__warn');
+    const send = q<HTMLAnchorElement>('.cart__send');
+
+    const open = () => {
+      overlay.hidden = false;
+      sheet.hidden = false;
+      fab.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+      overlay.hidden = true;
+      sheet.hidden = true;
+      fab.setAttribute('aria-expanded', 'false');
+    };
+
+    const row = (l: CartLine) => {
+      const li = el('li', 'cart__row');
+      const info = el('div', 'cart__info');
+      info.append(el('span', 'cart__name', l.name), el('span', 'cart__unit', money(l.price)));
+
+      const qty = el('div', 'cart__qty');
+      const minus = el('button', 'cart__qty-btn', '−') as HTMLButtonElement;
+      const plus = el('button', 'cart__qty-btn', '+') as HTMLButtonElement;
+      minus.type = plus.type = 'button';
+      minus.dataset.id = plus.dataset.id = l.id;
+      minus.dataset.delta = '-1';
+      plus.dataset.delta = '1';
+      minus.setAttribute('aria-label', `Menos ${l.name}`);
+      plus.setAttribute('aria-label', `Mais ${l.name}`);
+      qty.append(minus, el('span', 'cart__qty-n', String(l.qty)), plus);
+
+      li.append(info, qty);
+      return li;
+    };
+
+    let lastCount = 0;
+
+    const render = (cart: Cart) => {
+      const count = cartCount(cart);
+
+      badge.textContent = String(count);
+      badge.hidden = count === 0;
+      if (count > lastCount) {
+        fab.classList.remove('bump');
+        void fab.offsetWidth; // reinicia la animación
+        fab.classList.add('bump');
+      }
+      lastCount = count;
+
+      list.replaceChildren(...cart.lines.map(row));
+      emptyEl.hidden = count > 0;
+      foot.hidden = count === 0;
+      codeEl.textContent = cart.code ? `#${cart.code}` : '';
+      totalEl.textContent = money(cartTotal(cart));
+
+      const url = whatsappUrl(phone, orderMessage(name, cart));
+      warn.hidden = Boolean(url);
+      if (url) send.href = url;
+      else send.removeAttribute('href');
+      send.toggleAttribute('aria-disabled', !url);
+    };
+
+    // Un solo listener para todos los + y −
+    list.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-id]');
+      if (btn) changeQty(key, btn.dataset.id!, Number(btn.dataset.delta));
+    });
+
+    q('.cart__clear').addEventListener('click', () => clearCart(key));
+    fab.addEventListener('click', open);
+    overlay.addEventListener('click', close);
+    q('.cart__close').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !sheet.hidden) close();
+    });
+
+    onCartChange(key, render);
+  });
+</script>
+
+<style>
+/* Variables: --cart-* (definidas en global.css). Capas: por debajo del lightbox (10000). */
+.cart__fab {
+  position: fixed;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  right: max(1rem, calc((100vw - var(--app-max-width)) / 2 + 1rem));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--cart-fab-bg);
+  color: var(--cart-fab-text);
+  box-shadow: var(--cart-fab-shadow);
+}
+.cart__fab:active {
+  transform: scale(0.94);
+}
+.cart__fab.bump {
+  animation: cart-bump 0.35s ease;
+}
+@keyframes cart-bump {
+  50% { transform: scale(1.18); }
+}
+
+.cart__badge {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.2rem;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--cart-badge-bg);
+  color: var(--cart-badge-text);
+}
+.cart__badge[hidden] { display: none; }
+
+.cart__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: var(--cart-overlay);
+}
+.cart__overlay[hidden] { display: none; }
+
+.cart__sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  width: 100%;
+  max-width: var(--app-max-width);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: var(--cart-sheet-bg);
+  color: var(--cart-sheet-text);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+  animation: cart-up 0.25s ease;
+}
+.cart__sheet[hidden] { display: none; }
+@keyframes cart-up {
+  from { transform: translate(-50%, 100%); }
+  to { transform: translate(-50%, 0); }
+}
+
+.cart__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cart-sheet-border);
+}
+.cart__title { font-size: 1.1rem; }
+.cart__code {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--cart-sheet-muted);
+}
+.cart__close {
+  display: flex;
+  padding: 0.3rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--cart-sheet-muted);
+  cursor: pointer;
+}
+
+.cart__empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--cart-sheet-muted);
+}
+.cart__empty[hidden] { display: none; }
+
+.cart__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+}
+.cart__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: var(--cart-row-bg);
+}
+.cart__info { display: flex; flex-direction: column; min-width: 0; }
+.cart__name { font-size: 0.9rem; font-weight: 700; }
+.cart__unit { font-size: 0.75rem; color: var(--cart-sheet-muted); }
+
+.cart__qty { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.cart__qty-btn {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--cart-sheet-border);
+  border-radius: 50%;
+  background: var(--cart-sheet-bg);
+  color: var(--cart-sheet-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.cart__qty-n { min-width: 1.2rem; text-align: center; font-weight: 800; font-size: 0.9rem; }
+
+.cart__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--cart-sheet-border);
+}
+.cart__foot[hidden] { display: none; }
+.cart__total { display: flex; justify-content: space-between; font-size: 1.05rem; }
+.cart__warn { font-size: 0.8rem; font-weight: 600; color: var(--color-danger-text); }
+.cart__warn[hidden] { display: none; }
+
+.cart__send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  background: var(--cart-send-bg);
+  color: var(--cart-send-text);
+}
+.cart__send[aria-disabled] { opacity: 0.5; pointer-events: none; }
+
+.cart__clear {
+  padding: 0.3rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--cart-sheet-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+</style>

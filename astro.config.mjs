@@ -1,11 +1,13 @@
+// astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
 
 export default defineConfig({
+  // ...tu config existente (integrations, etc.)
   vite: {
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@': path.resolve('./src'),
       },
     },
   },

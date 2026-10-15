@@ -1,5 +1,9 @@
 ---
 import { Clock, ChevronDown, X } from 'lucide-astro';
+import { useTranslations } from '../../i18n';
+
+// Instancia de traducción centralizada basada en la URL / entorno
+const t = useTranslations(Astro.cookies, Astro.url);
 
 interface Props {
   name: string;
@@ -10,7 +14,7 @@ interface Props {
   schedule: Array<{
     day: string;
     hours: string;
-    current: boolean;
+    current?: boolean;
   }>;
   homeUrl?: string;
 }
@@ -21,9 +25,22 @@ const {
   logo,
   isOpen,
   todayHours,
-  schedule,
+  schedule = [],
   homeUrl = "/"
 } = Astro.props;
+
+// =========================================================
+// DETECCIÓN MATEMÁTICA REAL DEL DÍA DE HOY (0 = Dom, 1 = Seg... 6 = Sáb)
+// =========================================================
+const todayIndex = new Date().getDay();
+
+// Recalculamos el schedule de la data asegurando que `current` refleje HOY matemáticamente
+const computedSchedule = schedule.map((item, index) => {
+  return {
+    ...item,
+    current: index === todayIndex
+  };
+});
 ---
 
 <header class="navbar">
@@ -55,7 +72,7 @@ const {
       >
         <span class={`status-badge ${isOpen ? 'status-badge--open' : 'status-badge--closed'}`}>
           <span class="status-badge__dot"></span>
-          {isOpen ? 'Aberto' : 'Fechado'}
+          {isOpen ? t('status.open') : t('status.closed')}
         </span>
         <span class="navbar__hours-preview">
           <Clock size={12} aria-hidden="true" />
@@ -67,17 +84,17 @@ const {
       <!-- Dropdown Horarios -->
       <div id="schedule-dropdown" class="schedule-dropdown" hidden>
         <div class="schedule-dropdown__header">
-          <h3>Horário de Funcionamento</h3>
-          <button id="schedule-close" class="schedule-dropdown__close" aria-label="Fechar">
+          <h3>{t('schedule.title')}</h3>
+          <button id="schedule-close" class="schedule-dropdown__close" aria-label={t('common.buttons.close')}>
             <X size={16} aria-hidden="true" />
           </button>
         </div>
         <ul class="schedule-dropdown__list">
-          {schedule.map((item) => (
+          {computedSchedule.map((item) => (
             <li class={`schedule-dropdown__item ${item.current ? 'is-today' : ''}`}>
               <span class="schedule-dropdown__day">
                 {item.day}
-                {item.current && <span class="today-tag">Hoje</span>}
+                {item.current && <span class="today-tag">{t('schedule.today')}</span>}
               </span>
               <span class="schedule-dropdown__hours">{item.hours}</span>
             </li>
@@ -129,34 +146,6 @@ const {
 </script>
 
 <style>
-/*
-  Colores: este componente NO define ninguno.
-  El padre/tema debe proveer estas variables:
-
-  --navbar-bg
-  --navbar-border
-  --navbar-text            texto principal (nombre, horas)
-  --navbar-accent          tagline
-  --navbar-logo-bg
-  --navbar-logo-border
-
-  --navbar-btn-bg
-  --navbar-btn-bg-hover
-  --navbar-btn-border
-
-  --navbar-open-bg / --navbar-open-text
-  --navbar-closed-bg / --navbar-closed-text
-
-  --navbar-dropdown-bg
-  --navbar-dropdown-border
-  --navbar-dropdown-text
-  --navbar-dropdown-muted
-  --navbar-today-bg
-  --navbar-today-accent    borde izquierdo y etiqueta "Hoje"
-  --navbar-today-accent-text
-*/
-
-/* Solo espaciado/estructura (no colores) */
 .navbar {
   --nb-space-1: 0.25rem;
   --nb-space-2: 0.5rem;

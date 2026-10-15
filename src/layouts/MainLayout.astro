@@ -5,6 +5,11 @@ import BottomNav from './components/BottomNav.astro';
 import { siteData } from '../data/siteData';
 import { Home, Camera, User } from 'lucide-astro';
 
+interface Props {
+  hasBottomNav?: boolean;
+}
+
+const { hasBottomNav = true } = Astro.props;
 const { company } = siteData;
 
 const navItems = [
@@ -17,11 +22,11 @@ const navItems = [
 <BaseLayout
   title={`${company.name} — ${company.subtitle}`}
   description={company.description}
-  hasBottomNav
+  hasBottomNav={hasBottomNav}
 >
   <KubixNavbar slot="header" name={company.name} logo="/favicon.ico" />
 
   <slot />
 
-  <BottomNav slot="footer" items={navItems} />
+  {hasBottomNav && <BottomNav slot="footer" items={navItems} />}
 </BaseLayout>
